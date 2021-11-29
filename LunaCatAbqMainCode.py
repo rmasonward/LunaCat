@@ -1401,6 +1401,11 @@ p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0,
 del mdb.models['Model-1'].materials['Graphite Epoxy AS/3501']
 del mdb.models['Model-1'].sections['Section-2']
 
+#meshing the axle
+p = mdb.models['Model-1'].parts['Connector_beam']
+p.seedPart(size=0.014, deviationFactor=0.1, minSizeFactor=0.1)
+p = mdb.models['Model-1'].parts['Connector_beam']
+p.generateMesh()
 STTAAHHHPPPP
 
 
