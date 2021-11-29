@@ -692,24 +692,43 @@ pickedCells = c.findAt(((BASE_LENGTH/2, 0.0, BASE_WIDTH-THICKNESS/2), ), ((BASE_
 p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
 
 #partition payload holder flanges
-####CHECK THIS SECTION FOR GEOMETRY ERRORS
+####RMW UPDATED 11-29-2021
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS)
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS)
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=TIP_HEIGHT/2)
 c = p.cells
-pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, 0.0), ))
-p.PartitionCellByDatumPlane(datumPlane=d[14], cells=pickedCells)
-c = p.cells
-pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, 0.0), ))
-p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
-c = p.cells
-pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, 0.0), ))
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
 p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
+p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
+p.PartitionCellByDatumPlane(datumPlane=d[14], cells=pickedCells)
 
 p = mdb.models['Model-1'].parts['ARM']
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
 p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=BASE_HEIGHT/2)
+
+#partition spoon pull point
+armDatumIndices = {}
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2)
+armDatumIndices['XZ_spoon_midplane'] = p.datums.keys()[-1]
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=BASE_WIDTH/2)
+armDatumIndices['XY_midplane'] = p.datums.keys()[-1]
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, 0.0, BASE_WIDTH/2), ))
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['XY_midplane']], cells=pickedCells)
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, 0.0, BASE_WIDTH/4), ),((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, 0.0, 3*BASE_WIDTH/4), ))
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['XZ_spoon_midplane']], cells=pickedCells)
+
+#Creating Pull Point Set
+v = p.vertices
+verts = v.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, -TIP_HEIGHT/2, BASE_WIDTH/2), ))
+p.Set(vertices=verts, name='SPOON_PULL_POINT')
+###RMW CHANGES END
 
 ####AXLE#####
 #Creating Datum Planes for the AXLE (Connector_beam)
@@ -839,6 +858,12 @@ pickedCells = c.findAt(((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2+0.0001, WALL_THICKN
 d1 = p.datums
 p.PartitionCellByDatumPlane(datumPlane=d1[11], cells=pickedCells)
 
+#Creating Pull Point Set
+v = p.vertices
+print((WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, 0.0, WALL_THICKNESS/2))
+verts = v.findAt(((WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2), ))
+p.Set(vertices=verts, name='AXLE_CENTER_POINT')
+
 #### SIDE WALL 2 ####
 #Creating Datum Planes For SIDE WALL 2
 p = mdb.models['Model-1'].parts['Side_wall_2']
@@ -910,7 +935,7 @@ p = mdb.models['Model-1'].parts['CROSSMEMBER']
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
 p.DatumPointByCoordinate(coords=(AXLE_LENGTH, XBEAM_AXLE_DIA/2-XBEAM_AXLE_DIA/8, XBEAM_THICKNESS/2))
 
-#Creating Pull Set
+#Creating Pull Point Set
 v = p.vertices
 verts = v.findAt((((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2, XBEAM_HEIGHT, XBEAM_THICKNESS/2), ))
 p.Set(vertices=verts, name='XBEAM_PULL_POINT')
@@ -1074,10 +1099,6 @@ d11 = a1.instances['CROSSMEMBER-1'].datums
 d12 = a1.instances['Side_wall_1-1'].datums
 a1.CoincidentPoint(movablePoint=d11[10], fixedPoint=d12[8])
 
-#Rotating the CLEVIS
-a = mdb.models['Model-1'].rootAssembly
-a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2), 
-    axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
     
 #Instance bt ARM and AXLE
 a = mdb.models['Model-1'].rootAssembly
@@ -1095,7 +1116,20 @@ d2 = a.instances['Connector_beam-1'].datums
 a.FaceToFace(movablePlane=d1[20], fixedPlane=d2[9], flip=OFF, clearance=0.0)
 #: The instance "ARM-1" is fully constrained
 
+#extract locations of pull points
+# 'AXLE_CENTER_POINT'
+spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].vertices[0].pointOn[0]
+clevisAxleCoords = mdb.models['Model-1'].rootAssembly.instances['Side_wall_1-1'].sets['AXLE_CENTER_POINT'].vertices[0].pointOn[0]
+print(spoonCoords)
+print(clevisAxleCoords)
+# spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].nodes[0].coordinates
 
+#Rotating the CLEVIS
+CLEVIS_ANGLE = 0.0 if abs(spoonCoords[0]-clevisAxleCoords[0]) < 0.001 else 90 - atan((spoonCoords[1]-clevisAxleCoords[1])/(spoonCoords[0]-clevisAxleCoords[0]))*180/pi
+print("Updated clevis angle: "+str(CLEVIS_ANGLE))
+a = mdb.models['Model-1'].rootAssembly
+a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2), 
+    axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
 
 ##################################  
 # Create Composite Layup
@@ -1289,7 +1323,7 @@ p = mdb.models['Model-1'].parts['ARM']
 c = p.cells
 pickedCells = c.findAt(((2.395333, 0.012, 0.046667), ))
 d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
+# p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
 p.seedPart(size=0.05, deviationFactor=0.1, minSizeFactor=0.1)
 p = mdb.models['Model-1'].parts['ARM']
 p.generateMesh()
