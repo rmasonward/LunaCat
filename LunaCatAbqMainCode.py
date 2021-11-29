@@ -10,6 +10,9 @@ AERO 405/604 - Hartl
 November 11th, 2021
 """
 
+#####TEST#####
+
+
 from abaqus import *
 from abaqusConstants import *
 import __main__
