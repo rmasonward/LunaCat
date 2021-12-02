@@ -45,17 +45,17 @@ YOUNG_MOD = 70e9 #N/m^2
 POISSON = 0.3
 DENS = 2720. #kg/m^3
 
-BASE_WIDTH = 0.14 #m 
-BASE_HEIGHT = 0.06 #m 
+BASE_WIDTH = 0.14 #m ###DESIGN VARIABLE
+BASE_HEIGHT = 0.06 #m ###DESIGN VARIABLE
 
 TIP_HEIGHT = 0.02 #m
 
-THICKNESS = 0.005 #m #NEEDS A CHECK TO MAKE SURE THAT IT DOESN"T GET TOO BIG
+THICKNESS = 0.005 #m ###DESIGN VARIABLE
 if THICKNESS*2 > min(BASE_HEIGHT,BASE_WIDTH,TIP_HEIGHT):
     raise ValueError("Thickness is too big")
 
 BASE_LENGTH = 0.2 #m
-ARM_LENGTH = 2.4 #m
+ARM_LENGTH = 2.4 #m ###DESIGN VARIABLE
 SPOON_LENGTH = 0.2 #m
 SPOON_FLANGE_THICKNESS = 0.002 #m
 SPOON_FLANGE_HEIGHT = 0.01 #m
@@ -67,7 +67,8 @@ WALL_HEIGHT = 0.4 #m
 
 # Axle Beam Variables
 S1 = 0.1 #m  used to sketch the cross section
-AXLE_LENGTH = 0.6 #m
+AXLE_LENGTH = .6 #m ###DESIGN VARIABLE
+#This breaks when changing value over 1
 AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross section
 
 
@@ -78,7 +79,7 @@ XBEAM_HEIGHT = 0.7 #m
 XBEAM_FLAT_LENGTH = 0.02 #m
 XBEAM_THICKNESS = 0.1 #m
 XBEAM_AXLE_DIA = 0.2 #m
-OFFSET = sqrt((BASE_HEIGHT**2)/8)
+OFFSET = sqrt((BASE_HEIGHT**2)/8) ###DESIGN VARIABLE
 CLEVIS_RAD = XBEAM_AXLE_DIA/2
 
 # New variables from top opt
@@ -578,7 +579,7 @@ p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0,
     thicknessAssignment=FROM_SECTION)
     
 
-#ASsigning Section 1 to AXLE
+#Assigning Section 1 to AXLE
 p = mdb.models['Model-1'].parts['Connector_beam']
 c = p.cells
 cells = c.findAt(((0.0, 0.0, 0.0), ))
@@ -609,20 +610,22 @@ p.SectionAssignment(region=region, sectionName='Section-2', offset=0.0,
     thicknessAssignment=FROM_SECTION)
 
 
+
+
 ##################################  
 #Defining the face partitions
 ##################################  
 print('Partitioning part')
+
 #### ARM ####
 #Datum Planes for Assembly
-
-
 p = mdb.models['Model-1'].parts[ARM_NAME]
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH)
 c = p.cells
 pickedCells = c.findAt(((BASE_LENGTH/2, 0.0, THICKNESS/2), ))
 d = p.datums
 p.PartitionCellByDatumPlane(datumPlane=d[5], cells=pickedCells)
+#5
 
 #partition "spoon" section first
 c = p.cells
@@ -1036,7 +1039,7 @@ a1.CoincidentPoint(movablePoint=d1[3], fixedPoint=d2[8])
 
 
 
-#Instance bt CLEVIS ans SIDE WALL 1
+#Instance bt CLEVIS and SIDE WALL 1
 p = mdb.models['Model-1'].parts['CROSSMEMBER']
 a.Instance(name='CROSSMEMBER-1', part=p, dependent=ON)
 a = mdb.models['Model-1'].rootAssembly
@@ -1100,47 +1103,53 @@ a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X
     axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
 
 
+
+
+################### Old location of Composite layup
+
 ##################################  
 # Create Composite Layup
 ##################################  
 
-#NEED TO PARAMETERIZE THIS SECTION
-# p = mdb.models['Model-1'].parts['ARM']
-# v, e = p.vertices, p.edges
-# p.DatumCsysByThreePoints(point2=v.findAt(coordinates=(BASE_LENGTH, BASE_HEIGHT/2, 0.0)), 
-    # name='Datum csys-1', coordSysType=CARTESIAN, origin=p.InterestingPoint(
-    # edge=e.findAt(coordinates=(0.0, 0.0, 0.0)), rule=MIDDLE), 
-    # point1=p.InterestingPoint(edge=e.findAt(coordinates=(BASE_LENGTH, 0.0, 0.0)), 
-    # rule=MIDDLE))
-# layupOrientation = mdb.models['Model-1'].parts['ARM'].datums[6]
-# c = p.cells
-# cells = c.findAt(((0.0, 0.0, 0.0), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH, 0.0, 0.0), 
-    # ))
-# region1=regionToolset.Region(cells=cells)
-# region2=regionToolset.Region(cells=cells)
-# region3=regionToolset.Region(cells=cells)
-# compositeLayup = mdb.models['Model-1'].parts['ARM'].CompositeLayup(
-    # name='CompositeLayup-1', description='', elementType=SOLID, 
-    # symmetric=False, thicknessAssignment=FROM_SECTION)
-# compositeLayup.ReferenceOrientation(orientationType=SYSTEM, 
-    # localCsys=layupOrientation, fieldName='', 
-    # additionalRotationType=ROTATION_NONE, angle=0.0, 
-    # additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
-# compositeLayup.CompositePly(suppressed=False, plyName='Ply-1', region=region1, 
-    # material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-    # thickness=0.1, orientationType=ANGLE_0, 
-    # additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-    # axis=AXIS_3, angle=0.0, numIntPoints=3)
-# compositeLayup.CompositePly(suppressed=False, plyName='Ply-2', region=region2, 
-    # material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-    # thickness=0.1, orientationType=ANGLE_0, 
-    # additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-    # axis=AXIS_3, angle=45, numIntPoints=3)
-# compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3, 
-    # material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-    # thickness=0.1, orientationType=ANGLE_0, 
-    # additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-    # axis=AXIS_3, angle=-45, numIntPoints=3)
+p = mdb.models['Model-1'].parts['ARM']
+v, e = p.vertices, p.edges
+    
+p.DatumCsysByThreePoints(point2=v.findAt(coordinates=(0.0, BASE_HEIGHT/2, 0.0)), #Datum 28
+    name='Datum csys-1', coordSysType=CARTESIAN, origin=(0.0, 0.0, 0.0), 
+    point1=p.InterestingPoint(edge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, 0.0)), 
+    rule=MIDDLE))
+    
+layupOrientation = mdb.models['Model-1'].parts['ARM'].datums[28]
+#28
+c = p.cells
+cells = c.findAt(((0.0, 0.0, 0.0), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH, 0.0, 0.0), 
+    ))
+region1=regionToolset.Region(cells=cells)
+region2=regionToolset.Region(cells=cells)
+region3=regionToolset.Region(cells=cells)
+compositeLayup = mdb.models['Model-1'].parts['ARM'].CompositeLayup(
+    name='CompositeLayup-1', description='', elementType=SOLID, 
+    symmetric=False, thicknessAssignment=FROM_SECTION)
+compositeLayup.ReferenceOrientation(orientationType=SYSTEM, 
+    localCsys=layupOrientation, fieldName='', 
+    additionalRotationType=ROTATION_NONE, angle=0.0, 
+    additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
+compositeLayup.CompositePly(suppressed=False, plyName='Ply-1', region=region1, 
+    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+    thickness=0.1, orientationType=ANGLE_0, 
+    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+    axis=AXIS_3, angle=0.0, numIntPoints=3)
+compositeLayup.CompositePly(suppressed=False, plyName='Ply-2', region=region2, 
+    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+    thickness=0.1, orientationType=ANGLE_0, 
+    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+    axis=AXIS_3, angle=45, numIntPoints=3)
+compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3, 
+    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+    thickness=0.1, orientationType=ANGLE_0, 
+    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+    axis=AXIS_3, angle=-45, numIntPoints=3)
+
 
 
 ##################################  
