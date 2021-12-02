@@ -10,8 +10,6 @@ AERO 405/604 - Hartl
 November 11th, 2021
 """
 
-#####TEST#####
-#herer
 
 from abaqus import *
 from abaqusConstants import *
@@ -33,7 +31,7 @@ import visualization
 import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
-from math import atan, sin, cos, tan, sqrt
+from math import atan2, atan, sin, cos, tan, sqrt
 #from Post_P_Script import getResults
 
 
@@ -57,63 +55,65 @@ if THICKNESS*2 > min(BASE_HEIGHT,BASE_WIDTH,TIP_HEIGHT):
     raise ValueError("Thickness is too big")
 
 BASE_LENGTH = 0.2 #m
-ARM_LENGTH = 2.0 #m
+ARM_LENGTH = 2.4 #m
 SPOON_LENGTH = 0.2 #m
 SPOON_FLANGE_THICKNESS = 0.002 #m
 SPOON_FLANGE_HEIGHT = 0.01 #m
 
 WALL_THICKNESS = 0.1#m
-WALL_LENGTH = 2.0 #m
+WALL_LENGTH = 3.0 #m
 WALL_HEIGHT = 0.4 #m
-WALL_SIDE_X = 0.4 #m    this is the x-component of the sides of the base
+
 
 # Axle Beam Variables
 S1 = 0.1 #m  used to sketch the cross section
-AXLE_LENGTH = 0.4 #m
+AXLE_LENGTH = 0.6 #m
 AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross section
-
-#these variables are the points for sketching out the notch in the side plate, given in x and y components
-#could probably change these to be in terms of side lengths
-P1_X = -WALL_LENGTH/4 #m
-P1_Y = -AXLE_DIAMETER/2 #m
-P2_X = -WALL_LENGTH/4 - AXLE_DIAMETER/2
-P2_Y = 0 #m
-P3_X = -WALL_LENGTH/4 #m
-P3_Y = AXLE_DIAMETER/2 #m
-P4_X = -WALL_LENGTH/4 + AXLE_DIAMETER/2 #m
-P4_Y = 0 #m
-
-R1_X = WALL_LENGTH/4
-R1_Y = -AXLE_DIAMETER/2
-R2_X = WALL_LENGTH/4 - AXLE_DIAMETER/2
-R2_Y = 0
-R3_X = WALL_LENGTH/4
-R3_Y = AXLE_DIAMETER/2
-R4_X = WALL_LENGTH/4 + AXLE_DIAMETER/2
-R4_Y = 0
 
 
 # Cross Member Variables
-WALL_SEP_LENGTH = AXLE_LENGTH-WALL_THICKNESS #m
+WALL_SEP_LENGTH = AXLE_LENGTH-2*WALL_THICKNESS #m
 
 XBEAM_HEIGHT = 0.7 #m
-XBEAM_FLAT_LENGTH = 0.1 #m
+XBEAM_FLAT_LENGTH = 0.02 #m
 XBEAM_THICKNESS = 0.1 #m
 XBEAM_AXLE_DIA = 0.2 #m
 OFFSET = sqrt((BASE_HEIGHT**2)/8)
-
 CLEVIS_RAD = XBEAM_AXLE_DIA/2
-CLEVIS_DIST = WALL_LENGTH/2 - WALL_SIDE_X - CLEVIS_RAD
 
-# Calculating angle of clevis  #changed @12:28  11/22/2021
-x_arm = (P1_X+P2_X)/2
-y_arm = (P1_Y+P2_Y)/2
-Beta = 45 * pi / 180
-x_end = x_arm + ARM_LENGTH * cos(Beta)
-y_end = y_arm + ARM_LENGTH * sin(Beta)
-adj = x_end - CLEVIS_DIST - (P4_X+P2_X)/2 - CLEVIS_RAD #not sure if subtracting the radius is right
-CLEVIS_ANGLE = 90 - (atan(y_end/adj) * (180)/pi)
-print(CLEVIS_ANGLE)
+# New variables from top opt
+#### 5 design variables for top opt
+ToptThickness = 0.05
+L1 = 0.5
+L2 = 0.3
+CLEVIS_EDGE_THICK = 0.05
+XBEAM_EDGE_THICK = 0.05
+
+#fixed variables
+CLEVIS_DIST = (-WALL_LENGTH/2)+CLEVIS_RAD+CLEVIS_EDGE_THICK   ###MIDDLE OF CIRCULAR NOTCH
+WALL_SIDE_X = (WALL_LENGTH/2)- XBEAM_EDGE_THICK - (AXLE_DIAMETER/2) ###MIDDLE OF SQUARE NOTCH
+###variables for square notch
+P1_X = WALL_SIDE_X #m
+P1_Y = -AXLE_DIAMETER/2 #m
+P2_X = WALL_SIDE_X + AXLE_DIAMETER/2
+P2_Y = 0 #m
+P3_X = WALL_SIDE_X #m
+P3_Y = AXLE_DIAMETER/2 #m
+P4_X = WALL_SIDE_X - AXLE_DIAMETER/2 #m
+P4_Y = 0 #m
+## Variables for top opt cut
+X1 = WALL_LENGTH/2-AXLE_DIAMETER- 2*XBEAM_EDGE_THICK
+Y1 = -WALL_HEIGHT/2 + ToptThickness
+X2 = X1 - L1
+Y2 = Y1
+X3 = X2
+Y3 = 0
+X4 = X3 - L2
+Y4 = WALL_HEIGHT/2 - ToptThickness
+X5 = X1
+Y5 = Y4
+X6 = X1
+Y6 = 0
 
 
 #Part Names
@@ -157,156 +157,116 @@ Mdb()
 ##################################
 print('Sketching/Creating the part')
 
-##Side Wall 1
-s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
-g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
-s.setPrimaryObject(option=STANDALONE)
-#Starting at origin
-s.Line(point1=(0.0, 0.0), point2=(WALL_LENGTH, 0.0))
-s.HorizontalConstraint(entity=g.findAt((WALL_LENGTH/2, 0.0)), addUndoState=False)
-s.Line(point1=(WALL_LENGTH, 0.0), point2=(WALL_LENGTH-WALL_SIDE_X, WALL_HEIGHT))
-s.Line(point1=(WALL_LENGTH-WALL_SIDE_X, WALL_HEIGHT), point2=(WALL_SIDE_X, WALL_HEIGHT))
-s.HorizontalConstraint(entity=g.findAt((WALL_LENGTH/2, WALL_HEIGHT)), addUndoState=False)
-s.Line(point1=(WALL_SIDE_X, WALL_HEIGHT), point2=(0.0, 0.0))
+###########################
+### TopOpted SideWall 1 ###
+###########################
+s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+    sheetSize=10.0)
+g, v, d2, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
+s1.setPrimaryObject(option=STANDALONE)
+
+s1.Line(point1=(-WALL_LENGTH/5, WALL_HEIGHT/2), point2=(CLEVIS_DIST, CLEVIS_RAD + CLEVIS_EDGE_THICK))
+s1.Line(point1=(-WALL_LENGTH/5, -WALL_HEIGHT/2), point2=(CLEVIS_DIST, -(CLEVIS_RAD + CLEVIS_EDGE_THICK)))
+s1.Arc3Points(point1=(CLEVIS_DIST, CLEVIS_RAD+CLEVIS_EDGE_THICK), point2=(CLEVIS_DIST, -(CLEVIS_RAD+CLEVIS_EDGE_THICK)),
+    point3=(-WALL_LENGTH/2, 0.0))
+s1.Line(point1=(-WALL_LENGTH/5, -WALL_HEIGHT/2), point2=(WALL_SIDE_X, -(WALL_HEIGHT/2)))
+s1.Line(point1=(WALL_SIDE_X, -(WALL_HEIGHT/2)), point2=(WALL_LENGTH/2, 0.0))
+s1.Line(point1=(WALL_LENGTH/2, 0.0), point2=(WALL_SIDE_X, WALL_HEIGHT/2))
+s1.Line(point1=(WALL_SIDE_X, WALL_HEIGHT/2), point2=(-WALL_LENGTH/5, WALL_HEIGHT/2))
 p = mdb.models['Model-1'].Part(name='Side_wall_1', dimensionality=THREE_D, 
     type=DEFORMABLE_BODY)
 p = mdb.models['Model-1'].parts['Side_wall_1']
-p.BaseSolidExtrude(sketch=s, depth=WALL_THICKNESS)
-s.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
+p.BaseSolidExtrude(sketch=s1, depth=WALL_THICKNESS)
+s1.unsetPrimaryObject()
+p = mdb.models['Model-1'].parts['Side_wall_1']
 
 #Datum plane on side wall 1
-v1, e = p.vertices, p.edges
-p.DatumPlaneByThreePoints(point1=v1.findAt(coordinates=(WALL_LENGTH-WALL_SIDE_X, WALL_HEIGHT, 0.0)), 
-    point2=p.InterestingPoint(edge=e.findAt(coordinates=(WALL_SIDE_X, WALL_HEIGHT, 0.0)), 
-    rule=MIDDLE), point3=p.InterestingPoint(edge=e.findAt(coordinates=(WALL_LENGTH/2, 
-    0.0, 0.0)), rule=MIDDLE))
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
 
-#Notch in side wall 1
+#Partitioning 
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_SIDE_X)
+c = p.cells
+pickedCells = c.findAt(((0.0, 0.0, 0.0), ))
+d1 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d1[3], cells=pickedCells)
 p = mdb.models['Model-1'].parts['Side_wall_1']
-e1, d2 = p.edges, p.datums
-t = p.MakeSketchTransform(sketchPlane=d2[2], sketchUpEdge=e1.findAt(
-    coordinates=(WALL_LENGTH/2, 0.0, 0.0)), sketchPlaneSide=SIDE1, 
-    sketchOrientation=BOTTOM, origin=(WALL_LENGTH/2, WALL_HEIGHT/2, 0.0))
-s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
-    sheetSize=4.49, gridSpacing=0.11, transform=t)
-g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
-s1.setPrimaryObject(option=SUPERIMPOSE)
-p.projectReferencesOntoSketch(sketch=s1, filter=COPLANAR_EDGES)
-s1.Line(point1=(P1_X, P1_Y), point2=(P2_X, P2_Y))
-s1.Line(point1=(P2_X, P2_Y), point2=(P3_X, P3_Y))
-# s1.PerpendicularConstraint(entity1=g.findAt((-0.275, -0.055)), 
-    # entity2=g.findAt((-0.275, 0.055)), addUndoState=False)
-s1.Line(point1=(P3_X, P3_Y), point2=(P4_X, P4_Y))
-# s1.PerpendicularConstraint(entity1=g.findAt((-0.275, 0.055)), entity2=g.findAt(
-    # (-0.165, 0.055)), addUndoState=False)
-s1.Line(point1=(P4_X, P4_Y), point2=(P1_X, P1_Y))
-# s1.PerpendicularConstraint(entity1=g.findAt((-0.165, 0.055)), entity2=g.findAt(
-    # (-0.165, -0.055)), addUndoState=False)
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=WALL_THICKNESS/2)
+c = p.cells
+pickedCells = c.findAt(((0.0, 0.0, 0.0), ), ((WALL_LENGTH/2-AXLE_DIAMETER/4, 0.0, 0.0), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[5], cells=pickedCells)
 p = mdb.models['Model-1'].parts['Side_wall_1']
-e, d1 = p.edges, p.datums
-p.CutExtrude(sketchPlane=d1[2], sketchUpEdge=e.findAt(coordinates=(WALL_LENGTH/2, 0.0, 
-    0.0)), sketchPlaneSide=SIDE1, sketchOrientation=BOTTOM, sketch=s1, 
-    depth=WALL_THICKNESS/2, flipExtrudeDirection=ON)
-s1.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
-
-## Clevis Cut in Side Wall 1
-p = mdb.models['Model-1'].parts['Side_wall_1']
-e, d = p.edges, p.datums
-t = p.MakeSketchTransform(sketchPlane=d[2], sketchUpEdge=e.findAt(coordinates=(
-    WALL_LENGTH/2, 0.0, 0.0)), sketchPlaneSide=SIDE1, sketchOrientation=BOTTOM, origin=(
-    WALL_LENGTH/2, WALL_HEIGHT/2, 0.0))
-s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=4.49, 
-    gridSpacing=0.11, transform=t)
-g, v, d1, c = s.geometry, s.vertices, s.dimensions, s.constraints
-s.setPrimaryObject(option=SUPERIMPOSE)
-p = mdb.models['Model-1'].parts['Side_wall_1']
-p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
-s.CircleByCenterPerimeter(center=(CLEVIS_DIST, 0.0), point1=(CLEVIS_DIST+CLEVIS_RAD, 0.0))
-p = mdb.models['Model-1'].parts['Side_wall_1']
-e1, d2 = p.edges, p.datums
-p.CutExtrude(sketchPlane=d2[2], sketchUpEdge=e1.findAt(coordinates=(WALL_LENGTH/2, 0.0, 
-    0.0)), sketchPlaneSide=SIDE1, sketchOrientation=BOTTOM, sketch=s, 
-    depth=WALL_THICKNESS/2, flipExtrudeDirection=ON)
-s.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
-
-##Side Wall 2
+mdb.models['Model-1'].sketches.changeKey(fromName='__profile__', 
+    toName='__save__')
 s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
 g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
 s.setPrimaryObject(option=STANDALONE)
-#Starting at origin
-s.Line(point1=(0.0, 0.0), point2=(WALL_LENGTH, 0.0))
-s.HorizontalConstraint(entity=g.findAt((WALL_LENGTH/2, 0.0)), addUndoState=False)
-s.Line(point1=(WALL_LENGTH, 0.0), point2=(WALL_LENGTH-WALL_SIDE_X, WALL_HEIGHT))
-s.Line(point1=(WALL_LENGTH-WALL_SIDE_X, WALL_HEIGHT), point2=(WALL_SIDE_X, WALL_HEIGHT))
-s.HorizontalConstraint(entity=g.findAt((WALL_LENGTH/2, WALL_HEIGHT)), addUndoState=False)
-s.Line(point1=(WALL_SIDE_X, WALL_HEIGHT), point2=(0.0, 0.0))
-p = mdb.models['Model-1'].Part(name='Side_wall_2', dimensionality=THREE_D, 
+s.retrieveSketch(sketch=mdb.models['Model-1'].sketches['__save__'])
+s.Line(point1=(P1_X, P1_Y), point2=(P2_X, P2_Y))
+s.Line(point1=(P2_X, P2_Y), point2=(P3_X, P3_Y))
+s.Line(point1=(P3_X, P3_Y), point2=(P4_X, P4_Y))
+s.Line(point1=(P4_X, P4_Y), point2=(P1_X, P1_Y))
+p = mdb.models['Model-1'].Part(name='SquareCutOut', dimensionality=THREE_D, 
     type=DEFORMABLE_BODY)
-p = mdb.models['Model-1'].parts['Side_wall_2']
+p = mdb.models['Model-1'].parts['SquareCutOut']
 p.BaseSolidExtrude(sketch=s, depth=WALL_THICKNESS)
 s.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
+p = mdb.models['Model-1'].parts['SquareCutOut']
 
-#Datum plane on side wall 2
-p = mdb.models['Model-1'].parts['Side_wall_2']
-v1 = p.vertices
-p.DatumPlaneByThreePoints(point1=v1.findAt(coordinates=(0.0, 0.0, WALL_THICKNESS)), 
-    point2=v1.findAt(coordinates=(WALL_SIDE_X, WALL_HEIGHT, WALL_THICKNESS)), point3=v1.findAt(
-    coordinates=(WALL_LENGTH-WALL_SIDE_X, WALL_HEIGHT, WALL_THICKNESS)))
-    
-#Notch in side wall 2
-p = mdb.models['Model-1'].parts['Side_wall_2']
-e, d1 = p.edges, p.datums
-t = p.MakeSketchTransform(sketchPlane=d1[2], sketchUpEdge=e.findAt(
-    coordinates=(WALL_LENGTH/2, 0.0, WALL_THICKNESS)), sketchPlaneSide=SIDE1, 
-    sketchOrientation=BOTTOM, origin=(WALL_LENGTH/2, WALL_HEIGHT/2, WALL_THICKNESS))
-s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=4.49, 
-    gridSpacing=0.11, transform=t)
+## Clevis Cut in Side Wall 1
+mdb.models['Model-1'].sketches.changeKey(fromName='__profile__', 
+    toName='__save__')
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
 g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
-s.setPrimaryObject(option=SUPERIMPOSE)
-p = mdb.models['Model-1'].parts['Side_wall_2']
-p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
-s.Line(point1=(R1_X, R1_Y), point2=(R2_X, R2_Y))
-s.Line(point1=(R2_X, R2_Y), point2=(R3_X, R3_Y))
-# s.PerpendicularConstraint(entity1=g.findAt((0.275, -0.055)), entity2=g.findAt((
-    # 0.275, 0.055)), addUndoState=False)
-s.Line(point1=(R3_X, R3_Y), point2=(R4_X, R4_Y))
-# s.PerpendicularConstraint(entity1=g.findAt((0.275, 0.055)), entity2=g.findAt((
-    # 0.385, 0.055)), addUndoState=False)
-s.Line(point1=(R4_X, R4_Y), point2=(R1_X, R1_Y))
-# s.PerpendicularConstraint(entity1=g.findAt((0.385, 0.055)), entity2=g.findAt((
-    # 0.385, -0.055)), addUndoState=False)
-p = mdb.models['Model-1'].parts['Side_wall_2']
-e1, d2 = p.edges, p.datums
-p.CutExtrude(sketchPlane=d2[2], sketchUpEdge=e1.findAt(coordinates=(WALL_LENGTH/2, 0.0, 
-    WALL_THICKNESS)), sketchPlaneSide=SIDE1, sketchOrientation=BOTTOM, sketch=s, 
-    depth=WALL_THICKNESS/2, flipExtrudeDirection=ON)
+s.setPrimaryObject(option=STANDALONE)
+s.retrieveSketch(sketch=mdb.models['Model-1'].sketches['__save__'])
+del mdb.models['Model-1'].sketches['__save__']
+s.CircleByCenterPerimeter(center=(CLEVIS_DIST, 0.0), point1=(CLEVIS_DIST+CLEVIS_RAD, 
+    0.0))
+p = mdb.models['Model-1'].Part(name='XbeamCutOut', dimensionality=THREE_D, 
+    type=DEFORMABLE_BODY)
+p = mdb.models['Model-1'].parts['XbeamCutOut']
+p.BaseSolidExtrude(sketch=s, depth=WALL_THICKNESS)
 s.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
+p = mdb.models['Model-1'].parts['XbeamCutOut']
+#Creating top opt cut 
+mdb.models['Model-1'].sketches.changeKey(fromName='__profile__', 
+    toName='__save__')
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
+g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=STANDALONE)
+s.retrieveSketch(sketch=mdb.models['Model-1'].sketches['__save__'])
+del mdb.models['Model-1'].sketches['__save__']
+s.Line(point1=(X1, Y1), point2=(X2, Y2))
+s.Line(point1=(X2, Y2), point2=(X3,Y3))
+s.Line(point1=(X3,Y3), point2=(X4,Y4))
+s.Line(point1=(X4,Y4), point2=(X5,Y5))
+s.Line(point1=(X5,Y5), point2=(X6,Y6))
+s.Line(point1=(X6,Y6), point2=(X1, Y1))
+p = mdb.models['Model-1'].Part(name='TopOptCut', dimensionality=THREE_D, 
+    type=DEFORMABLE_BODY)
+p = mdb.models['Model-1'].parts['TopOptCut']
+p.BaseSolidExtrude(sketch=s, depth=WALL_THICKNESS)
+s.unsetPrimaryObject()
+p = mdb.models['Model-1'].parts['TopOptCut']
 
-## Clevis Cut in Side Wall 2
-e, d = p.edges, p.datums
-t = p.MakeSketchTransform(sketchPlane=d[2], sketchUpEdge=e.findAt(coordinates=(
-    WALL_LENGTH/2, 0.0, WALL_THICKNESS)), sketchPlaneSide=SIDE1, sketchOrientation=BOTTOM, origin=(
-    WALL_LENGTH/2, WALL_HEIGHT/2, WALL_THICKNESS))
-s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
-    sheetSize=4.49, gridSpacing=0.11, transform=t)
-g, v, d1, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
-s1.setPrimaryObject(option=SUPERIMPOSE)
-p = mdb.models['Model-1'].parts['Side_wall_2']
-p.projectReferencesOntoSketch(sketch=s1, filter=COPLANAR_EDGES)
-s1.CircleByCenterPerimeter(center=(-CLEVIS_DIST, 0.0), point1=(-CLEVIS_DIST-CLEVIS_RAD, 0.0))
-p = mdb.models['Model-1'].parts['Side_wall_2']
-e1, d2 = p.edges, p.datums
-p.CutExtrude(sketchPlane=d2[2], sketchUpEdge=e1.findAt(coordinates=(WALL_LENGTH/2, 0.0, 
-    WALL_THICKNESS)), sketchPlaneSide=SIDE1, sketchOrientation=BOTTOM, sketch=s1, 
-    depth=WALL_THICKNESS/2, flipExtrudeDirection=ON)
-s1.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
-
+## Cleaning up model
+p1 = mdb.models['Model-1'].parts['XbeamCutOut']
+session.viewports['Viewport: 1'].setValues(displayedObject=p1)
+del mdb.models['Model-1'].parts['XbeamCutOut']
+p = mdb.models['Model-1'].parts['Side_wall_1']
+session.viewports['Viewport: 1'].setValues(displayedObject=p)
+p1 = mdb.models['Model-1'].parts['SquareCutOut']
+session.viewports['Viewport: 1'].setValues(displayedObject=p1)
+del mdb.models['Model-1'].parts['SquareCutOut']
+p = mdb.models['Model-1'].parts['Side_wall_1']
+session.viewports['Viewport: 1'].setValues(displayedObject=p)
+del mdb.models['Model-1'].parts['Side_wall_1']
+p = mdb.models['Model-1'].parts['TopOptCut']
+session.viewports['Viewport: 1'].setValues(displayedObject=p)
+mdb.models['Model-1'].parts.changeKey(fromName='TopOptCut', 
+    toName='Side_wall_1')
 
 ########################################
 ##Arm
@@ -610,23 +570,14 @@ mdb.models['Model-1'].HomogeneousSolidSection(name='Section-2',
 #Assigning Section 1 to SIDE WALL 1
 p = mdb.models['Model-1'].parts['Side_wall_1']
 c = p.cells
-cells = c.findAt(((WALL_LENGTH/2, WALL_HEIGHT/2, WALL_THICKNESS/2), ))
+cells = c.findAt(((WALL_LENGTH/2 - XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
 region = p.Set(cells=cells, name='Set-1')
 p = mdb.models['Model-1'].parts['Side_wall_1']
 p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0, 
     offsetType=MIDDLE_SURFACE, offsetField='', 
     thicknessAssignment=FROM_SECTION)
     
-#Assigning Section 1 to SIDE WALL 2
-p = mdb.models['Model-1'].parts['Side_wall_2']
-c = p.cells
-cells = c.findAt(((WALL_LENGTH/2, WALL_HEIGHT/2, WALL_THICKNESS/2), ))
-region = p.Set(cells=cells, name='Set-1')
-p = mdb.models['Model-1'].parts['Side_wall_2']
-p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0, 
-    offsetType=MIDDLE_SURFACE, offsetField='', 
-    thicknessAssignment=FROM_SECTION)
-   
+
 #ASsigning Section 1 to AXLE
 p = mdb.models['Model-1'].parts['Connector_beam']
 c = p.cells
@@ -692,24 +643,43 @@ pickedCells = c.findAt(((BASE_LENGTH/2, 0.0, BASE_WIDTH-THICKNESS/2), ), ((BASE_
 p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
 
 #partition payload holder flanges
-####CHECK THIS SECTION FOR GEOMETRY ERRORS
+####RMW UPDATED 12-2-2021
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS)
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS)
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=TIP_HEIGHT/2)
 c = p.cells
-pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, 0.0), ))
-p.PartitionCellByDatumPlane(datumPlane=d[14], cells=pickedCells)
-c = p.cells
-pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, 0.0), ))
-p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
-c = p.cells
-pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, 0.0), ))
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
 p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
+p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
+p.PartitionCellByDatumPlane(datumPlane=d[14], cells=pickedCells)
 
 p = mdb.models['Model-1'].parts['ARM']
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
 p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=BASE_HEIGHT/2)
+
+#partition spoon pull point
+armDatumIndices = {}
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2)
+armDatumIndices['XZ_spoon_midplane'] = p.datums.keys()[-1]
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=BASE_WIDTH/2)
+armDatumIndices['XY_midplane'] = p.datums.keys()[-1]
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, 0.0, BASE_WIDTH/2), ))
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['XY_midplane']], cells=pickedCells)
+
+pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, 0.0, BASE_WIDTH/4), ),((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, 0.0, 3*BASE_WIDTH/4), ))
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['XZ_spoon_midplane']], cells=pickedCells)
+
+#Creating Pull Point Set
+v = p.vertices
+verts = v.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, -TIP_HEIGHT/2, BASE_WIDTH/2), ))
+p.Set(vertices=verts, name='SPOON_PULL_POINT')
+###RMW CHANGES END
 
 ####AXLE#####
 #Creating Datum Planes for the AXLE (Connector_beam)
@@ -788,108 +758,110 @@ d1 = p.datums
 p.PartitionCellByDatumPlane(datumPlane=d1[13], cells=pickedCells)
 
 #### SIDE WALL 1 ####
+#Creating the Datum Points for Side Wall 1
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPointByCoordinate(coords=(WALL_SIDE_X, 0.0, 0.0))
+p.DatumPointByCoordinate(coords=(CLEVIS_DIST, 0.0, 0.0))
 #Creating the Datum Planes for Side Wall 1
 p = mdb.models['Model-1'].parts['Side_wall_1']
-p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=WALL_THICKNESS/2)
-p.DatumPointByCoordinate(coords=(WALL_LENGTH/4, WALL_HEIGHT/2, WALL_THICKNESS/2))
-p.DatumPointByCoordinate(coords=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2))
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
 p = mdb.models['Model-1'].parts['Side_wall_1']
-v1 = p.vertices
-p.DatumPlaneByThreePoints(point1=v1.findAt(coordinates=(WALL_LENGTH/4, WALL_HEIGHT/2+AXLE_DIAMETER/2, 0.0)), 
-    point2=v1.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, 0.0)), point3=v1.findAt(
-    coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, WALL_THICKNESS/2)))
-v = p.vertices
-p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, 0.0)), 
-    point2=v.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, WALL_THICKNESS/2)), point3=v.findAt(
-    coordinates=(WALL_LENGTH/4, WALL_HEIGHT/2-AXLE_DIAMETER/2, 0.0)))
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=CLEVIS_DIST)
 p = mdb.models['Model-1'].parts['Side_wall_1']
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_LENGTH/4)
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD)
-p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=WALL_HEIGHT/2)
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_LENGTH/2)
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_SIDE_X)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=X1)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=X2)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=X4)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=0.0)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=P1_Y)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=P3_Y)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=-WALL_LENGTH/5)
 
 #Partitioning SIDE WALL 1
+c = p.cells
+pickedCells = c.findAt(((-WALL_LENGTH/2 + CLEVIS_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
+d1 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d1[6], cells=pickedCells)
 p = mdb.models['Model-1'].parts['Side_wall_1']
 c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2,WALL_HEIGHT/2, WALL_THICKNESS/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
-
+pickedCells = c.findAt(((WALL_LENGTH/2 - XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[10], cells=pickedCells)
 p = mdb.models['Model-1'].parts['Side_wall_1']
 c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2,WALL_HEIGHT/2+0.0001, WALL_THICKNESS/2), ), ((WALL_LENGTH/2,WALL_HEIGHT/2-0.0001, WALL_THICKNESS/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[6], cells=pickedCells)
-
-c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2, WALL_HEIGHT/2+0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2, WALL_HEIGHT/2+0.0001, 3*WALL_THICKNESS/4), 
-     ), ((WALL_LENGTH/2, WALL_HEIGHT/2-0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2, WALL_HEIGHT/2-0.0001, 3*WALL_THICKNESS/4), ))
+pickedCells = c.findAt((((X4+X3)/2, 0.0, WALL_THICKNESS/2), ))
 d1 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d1[14], cells=pickedCells)
-
+p.PartitionCellByDatumPlane(datumPlane=d1[9], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
 c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2+0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2+0.0001, 3*WALL_THICKNESS/4),
-     ), ((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2-0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2-0.0001, 3*WALL_THICKNESS/4), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[12], cells=pickedCells)
-
+pickedCells = c.findAt(((WALL_LENGTH/2 - XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[8], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
 c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2+0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2+0.0001, 3*WALL_THICKNESS/4),
-     ), ((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2-0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2-0.0001, 3*WALL_THICKNESS/4), ))
+pickedCells = c.findAt(((WALL_LENGTH/2 - XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
 d1 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d1[11], cells=pickedCells)
-
-#### SIDE WALL 2 ####
-#Creating Datum Planes For SIDE WALL 2
-p = mdb.models['Model-1'].parts['Side_wall_2']
-p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=WALL_THICKNESS/2)
-p.DatumPointByCoordinate(coords=(WALL_LENGTH/4, WALL_HEIGHT/2, WALL_THICKNESS/2))
-p.DatumPointByCoordinate(coords=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2))
-p = mdb.models['Model-1'].parts['Side_wall_2']
-v1 = p.vertices
-p.DatumPlaneByThreePoints(point1=v1.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, WALL_THICKNESS)), 
-    point2=v1.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, WALL_THICKNESS/2)), point3=v1.findAt(
-    coordinates=(WALL_LENGTH/4, WALL_HEIGHT/2+AXLE_DIAMETER/2, WALL_THICKNESS)))
+p.PartitionCellByDatumPlane(datumPlane=d1[7], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+c = p.cells
+pickedCells = c.findAt(((-WALL_LENGTH/2 + CLEVIS_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ), ((X4-0.0001, 0.0, WALL_THICKNESS/2), ), (((X4+X3)/2, 0.0, WALL_THICKNESS/2), ), ((WALL_LENGTH/2 - XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ), ((WALL_LENGTH/2 -AXLE_DIAMETER - 3*XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+c = p.cells
+pickedCells = c.findAt(((-WALL_LENGTH/5, -0.001, WALL_THICKNESS/2), ), ((-WALL_LENGTH/5, 0.001, 
+    WALL_THICKNESS/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[14], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+c = p.cells
+pickedCells = c.findAt(((WALL_LENGTH/2 - XBEAM_EDGE_THICK - AXLE_DIAMETER, -0.001, WALL_THICKNESS/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[12], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+c = p.cells
+pickedCells = c.findAt(((WALL_LENGTH/2 - XBEAM_EDGE_THICK - AXLE_DIAMETER, 0.001, WALL_THICKNESS/2), ))
+d1 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d1[13], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Side_wall_1']
 v = p.vertices
-p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, WALL_THICKNESS)), 
-    point2=v.findAt(coordinates=(WALL_LENGTH/4-AXLE_DIAMETER/2, WALL_HEIGHT/2, WALL_THICKNESS/2)), point3=v.findAt(
-    coordinates=(WALL_LENGTH/4, WALL_HEIGHT/2-AXLE_DIAMETER/2, WALL_THICKNESS)))
+p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(P2_X, 0.0, WALL_THICKNESS)), 
+    point2=v.findAt(coordinates=(P2_X, 0.0, 0.0)), point3=v.findAt(
+    coordinates=(P3_X, P3_Y, 0.0)))
+p = mdb.models['Model-1'].parts['Side_wall_1']
+v1 = p.vertices
+p.DatumPlaneByThreePoints(point1=v1.findAt(coordinates=(P2_X, 0.0, WALL_THICKNESS)), 
+    point2=v1.findAt(coordinates=(P2_X, 0.0, 0.0)), point3=v1.findAt(
+    coordinates=(P1_X, P1_Y, 0.0)))
 
+# #Creating Pull Point Set
+# v = p.vertices
+# p.ReferencePoint(point=d1[4])
+# mdb.models['Model-1'].parts['Side_wall_1'].features.changeKey(fromName='RP', 
+    # toName='AXLE_CENTER_POINT')
+
+#### SIDE WALL 2 will now be created ####
+p1 = mdb.models['Model-1'].parts['Side_wall_1']
+session.viewports['Viewport: 1'].setValues(displayedObject=p1)
+p = mdb.models['Model-1'].Part(name='Side_wall_2', 
+    objectToCopy=mdb.models['Model-1'].parts['Side_wall_1'])
 p = mdb.models['Model-1'].parts['Side_wall_2']
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_LENGTH/4)
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD)
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_LENGTH/2)
-p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=WALL_HEIGHT/2)
-
-#Partitioning SIDE WALL 2
+p.features['Datum pt-1'].setValues(zValue=WALL_THICKNESS)
 p = mdb.models['Model-1'].parts['Side_wall_2']
-c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2, WALL_HEIGHT/2, WALL_THICKNESS/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[6], cells=pickedCells)
+p.regenerate()
+p = mdb.models['Model-1'].parts['Side_wall_2']
+p.features['Datum pt-2'].setValues(zValue=WALL_THICKNESS)
+p = mdb.models['Model-1'].parts['Side_wall_2']
+p.regenerate()
 
-c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2, WALL_HEIGHT/2, WALL_THICKNESS/4), ), ((WALL_LENGTH/2, WALL_HEIGHT/2, 3*WALL_THICKNESS/4), ))
-d1 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d1[14], cells=pickedCells)
 
-c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2, WALL_HEIGHT/2+0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2, WALL_HEIGHT/2+0.0001, 3*WALL_THICKNESS/4), 
-     ), ((WALL_LENGTH/2, WALL_HEIGHT/2-0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2, WALL_HEIGHT/2-0.0001, 3*WALL_THICKNESS/4), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
-
-c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2+0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2+0.0001, 3*WALL_THICKNESS/4),
-     ), ((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2-0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2+0.0001, WALL_HEIGHT/2-0.0001, 3*WALL_THICKNESS/4), ))
-d1 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d1[12], cells=pickedCells)
-
-c = p.cells
-pickedCells = c.findAt(((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2+0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2+0.0001, 3*WALL_THICKNESS/4),
-     ), ((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2-0.0001, WALL_THICKNESS/4), ), ((WALL_LENGTH/2-0.0001, WALL_HEIGHT/2-0.0001, 3*WALL_THICKNESS/4), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[11], cells=pickedCells)
 
 #### CLEVIS ####
 #Creating Datum Point For the CLEVIS
@@ -1028,73 +1000,104 @@ del a.features['ARM-1']
 a1 = mdb.models['Model-1'].rootAssembly
 
 #Instance bt SIDE WALL 1 and AXLE
+a = mdb.models['Model-1'].rootAssembly
 p = mdb.models['Model-1'].parts['Side_wall_1']
-a1.Instance(name='Side_wall_1-1', part=p, dependent=ON)
+a.Instance(name='Side_wall_1-1', part=p, dependent=ON)
+a = mdb.models['Model-1'].rootAssembly
 p = mdb.models['Model-1'].parts['Connector_beam']
-a1.Instance(name='Connector_beam-1', part=p, dependent=ON)
+a.Instance(name='Connector_beam-1', part=p, dependent=ON)
 a1 = mdb.models['Model-1'].rootAssembly
-d11 = a1.instances['Connector_beam-1'].datums
-d12 = a1.instances['Side_wall_1-1'].datums
-a1.FaceToFace(movablePlane=d11[11], fixedPlane=d12[10], flip=OFF, 
-    clearance=0.0)
-d11 = a1.instances['Connector_beam-1'].datums
-d12 = a1.instances['Side_wall_1-1'].datums
-a1.FaceToFace(movablePlane=d11[12], fixedPlane=d12[9], flip=OFF, clearance=0.0)
-d11 = a1.instances['Connector_beam-1'].datums
-d12 = a1.instances['Side_wall_1-1'].datums
-a1.CoincidentPoint(movablePoint=d11[7], fixedPoint=d12[7])
-#: The instance "Connector_beam-1" is fully constrained
-
+d1 = a1.instances['Side_wall_1-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.FaceToFace(movablePlane=d1[24], fixedPlane=d2[12], flip=OFF, clearance=0.0)
+a1 = mdb.models['Model-1'].rootAssembly
+d1 = a1.instances['Side_wall_1-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.FaceToFace(movablePlane=d1[25], fixedPlane=d2[11], flip=OFF, clearance=0.0)
+a1 = mdb.models['Model-1'].rootAssembly
+d1 = a1.instances['Side_wall_1-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.CoincidentPoint(movablePoint=d1[3], fixedPoint=d2[7])
 
 #Instance bt AXLE and SIDE WALL 2
 p = mdb.models['Model-1'].parts['Side_wall_2']
 a1.Instance(name='Side_wall_2-1', part=p, dependent=ON)
-p1 = a1.instances['Side_wall_2-1']
-p1.translate(vector=(2.42, 0.0, 0.0))
-d11 = a1.instances['Side_wall_2-1'].datums
-d12 = a1.instances['Connector_beam-1'].datums
-a1.FaceToFace(movablePlane=d11[9], fixedPlane=d12[12], flip=ON, clearance=0.0)
-d11 = a1.instances['Side_wall_2-1'].datums
-d12 = a1.instances['Connector_beam-1'].datums
-a1.FaceToFace(movablePlane=d11[10], fixedPlane=d12[11], flip=ON, clearance=0.0)
-d11 = a1.instances['Side_wall_2-1'].datums
-d12 = a1.instances['Connector_beam-1'].datums
-a1.CoincidentPoint(movablePoint=d11[7], fixedPoint=d12[8])
-#: The instance "Side_wall_2-1" is fully constrained
+d1 = a1.instances['Side_wall_2-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.FaceToFace(movablePlane=d1[25], fixedPlane=d2[11], flip=OFF, clearance=0.0)
+a1 = mdb.models['Model-1'].rootAssembly
+d1 = a1.instances['Side_wall_2-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.FaceToFace(movablePlane=d1[24], fixedPlane=d2[12], flip=OFF, clearance=0.0)
+a1 = mdb.models['Model-1'].rootAssembly
+d1 = a1.instances['Side_wall_2-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.CoincidentPoint(movablePoint=d1[3], fixedPoint=d2[8])
+
+
 
 #Instance bt CLEVIS ans SIDE WALL 1
 p = mdb.models['Model-1'].parts['CROSSMEMBER']
-a1.Instance(name='CROSSMEMBER-1', part=p, dependent=ON)
-p1 = a1.instances['CROSSMEMBER-1']
-p1.translate(vector=(2.3, 0.0, 0.0))
-d11 = a1.instances['CROSSMEMBER-1'].datums
-d12 = a1.instances['Side_wall_2-1'].datums
-a1.FaceToFace(movablePlane=d11[9], fixedPlane=d12[6], flip=OFF, clearance=0.0)
-d11 = a1.instances['CROSSMEMBER-1'].datums
-d12 = a1.instances['Side_wall_1-1'].datums
-a1.CoincidentPoint(movablePoint=d11[10], fixedPoint=d12[8])
-
-#Rotating the CLEVIS
+a.Instance(name='CROSSMEMBER-1', part=p, dependent=ON)
 a = mdb.models['Model-1'].rootAssembly
-a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2), 
-    axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
+f1 = a.instances['CROSSMEMBER-1'].faces
+f2 = a.instances['Side_wall_1-1'].faces
+a.FaceToFace(movablePlane=f1.findAt(coordinates=(AXLE_LENGTH, 0.106702, 0.060301)), 
+    fixedPlane=f2.findAt(coordinates=(1.369204, 0.179423, AXLE_LENGTH)), flip=OFF, 
+    clearance=0.0)
+a = mdb.models['Model-1'].rootAssembly
+d1 = a.instances['CROSSMEMBER-1'].datums
+d2 = a.instances['Side_wall_1-1'].datums
+a.CoincidentPoint(movablePoint=d1[10], fixedPoint=d2[4])
     
 #Instance bt ARM and AXLE
-a = mdb.models['Model-1'].rootAssembly
 p = mdb.models['Model-1'].parts['ARM']
 a.Instance(name='ARM-1', part=p, dependent=ON)
+p1 = a.instances['ARM-1']
+p1.translate(vector=(2.334, 0.0, 0.0))
 a = mdb.models['Model-1'].rootAssembly
 d1 = a.instances['ARM-1'].datums
 d2 = a.instances['Side_wall_2-1'].datums
-a.FaceToFace(movablePlane=d1[19], fixedPlane=d2[10], flip=ON, clearance=0.0)
-d1 = a.instances['ARM-1'].datums
-d2 = a.instances['Connector_beam-1'].datums
-a.FaceToFace(movablePlane=d1[21], fixedPlane=d2[10], flip=ON, clearance=0.0)
-d1 = a.instances['ARM-1'].datums
-d2 = a.instances['Connector_beam-1'].datums
-a.FaceToFace(movablePlane=d1[20], fixedPlane=d2[9], flip=OFF, clearance=0.0)
+a.FaceToFace(movablePlane=d1[19], fixedPlane=d2[25], flip=OFF, clearance=0.0)
+a1 = mdb.models['Model-1'].rootAssembly
+d1 = a1.instances['ARM-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.FaceToFace(movablePlane=d1[20], fixedPlane=d2[9], flip=OFF, clearance=0.0)
+a1 = mdb.models['Model-1'].rootAssembly
+d1 = a1.instances['ARM-1'].datums
+d2 = a1.instances['Connector_beam-1'].datums
+a1.FaceToFace(movablePlane=d1[21], fixedPlane=d2[10], flip=ON, clearance=0.0)
 #: The instance "ARM-1" is fully constrained
 
+# a = mdb.models['Model-1'].rootAssembly
+# p = mdb.models['Model-1'].parts['ARM']
+# a.Instance(name='ARM-1', part=p, dependent=ON)
+# a = mdb.models['Model-1'].rootAssembly
+# d1 = a.instances['ARM-1'].datums
+# d2 = a.instances['Side_wall_2-1'].datums
+# a.FaceToFace(movablePlane=d1[19], fixedPlane=d2[10], flip=ON, clearance=0.0)
+# d1 = a.instances['ARM-1'].datums
+# d2 = a.instances['Connector_beam-1'].datums
+# a.FaceToFace(movablePlane=d1[21], fixedPlane=d2[10], flip=ON, clearance=0.0)
+# d1 = a.instances['ARM-1'].datums
+# d2 = a.instances['Connector_beam-1'].datums
+# a.FaceToFace(movablePlane=d1[20], fixedPlane=d2[9], flip=OFF, clearance=0.0)
+# #: The instance "ARM-1" is fully constrained
+
+#extract locations of pull points
+# 'AXLE_CENTER_POINT'
+spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].vertices[0].pointOn[0]
+clevisAxleCoords = mdb.models['Model-1'].rootAssembly.instances['Side_wall_1-1'].datums[4].pointOn
+print(spoonCoords)
+print(clevisAxleCoords)
+# spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].nodes[0].coordinates
+
+#Rotating the CLEVIS
+CLEVIS_ANGLE = 0.0 if abs(spoonCoords[0]-clevisAxleCoords[0]) < 0.001 else atan2(spoonCoords[0]-clevisAxleCoords[0],spoonCoords[1]-clevisAxleCoords[1])*180/pi
+print("Updated clevis angle: "+str(CLEVIS_ANGLE))
+a = mdb.models['Model-1'].rootAssembly
+a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2), 
+    axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
 
 
 ##################################  
