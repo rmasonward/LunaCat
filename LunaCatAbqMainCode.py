@@ -610,6 +610,52 @@ p.SectionAssignment(region=region, sectionName='Section-2', offset=0.0,
     thicknessAssignment=FROM_SECTION)
 
 
+##################################  
+# Create Composite Layup
+##################################  
+
+armDatumIndices = {} ### Creates array to reference datum plane
+p = mdb.models['Model-1'].parts['ARM']
+v, e = p.vertices, p.edges
+d = p.datums
+    
+p.DatumCsysByThreePoints(point2=v.findAt(coordinates=(0.0, BASE_HEIGHT/2, 0.0)), #Datum 28
+    name='Datum csys-1', coordSysType=CARTESIAN, origin=(0.0, 0.0, 0.0), 
+    point1=p.InterestingPoint(edge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, 0.0)), 
+    rule=MIDDLE))
+    
+armDatumIndices['Composite-csys'] = d.keys()[-1]
+layupOrientation = d[armDatumIndices['Composite-csys']]
+
+c = p.cells
+cells = c.findAt(((0.0, 0.0, 0.0), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH, 0.0, 0.0), 
+    ))
+region1=regionToolset.Region(cells=cells)
+region2=regionToolset.Region(cells=cells)
+region3=regionToolset.Region(cells=cells)
+compositeLayup = mdb.models['Model-1'].parts['ARM'].CompositeLayup(
+    name='CompositeLayup-1', description='', elementType=SOLID, 
+    symmetric=False, thicknessAssignment=FROM_SECTION)
+compositeLayup.ReferenceOrientation(orientationType=SYSTEM, 
+    localCsys=layupOrientation, fieldName='', 
+    additionalRotationType=ROTATION_NONE, angle=0.0, 
+    additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
+compositeLayup.CompositePly(suppressed=False, plyName='Ply-1', region=region1, 
+    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+    thickness=0.1, orientationType=ANGLE_0, 
+    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+    axis=AXIS_3, angle=0.0, numIntPoints=3)
+compositeLayup.CompositePly(suppressed=False, plyName='Ply-2', region=region2, 
+    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+    thickness=0.1, orientationType=ANGLE_0, 
+    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+    axis=AXIS_3, angle=45, numIntPoints=3)
+compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3, 
+    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+    thickness=0.1, orientationType=ANGLE_0, 
+    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+    axis=AXIS_3, angle=-45, numIntPoints=3)
+
 
 
 ##################################  
@@ -621,52 +667,59 @@ print('Partitioning part')
 #Datum Planes for Assembly
 p = mdb.models['Model-1'].parts[ARM_NAME]
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH)
+armDatumIndices['armplane1'] = p.datums.keys()[-1]
 c = p.cells
 pickedCells = c.findAt(((BASE_LENGTH/2, 0.0, THICKNESS/2), ))
 d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[5], cells=pickedCells)
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['armplane1']], cells=pickedCells)
 #5
 
 #partition "spoon" section first
 c = p.cells
 pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH)
-p.PartitionCellByDatumPlane(datumPlane=d[7], cells=pickedCells)
+armDatumIndices['armplane2'] = p.datums.keys()[-1]
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['armplane2']], cells=pickedCells)
 
-#partiion side walls 
+#Partitioning side walls 
 p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=THICKNESS)
+armDatumIndices['armplane3'] = p.datums.keys()[-1]
 p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=BASE_WIDTH-THICKNESS)
+armDatumIndices['armplane4'] = p.datums.keys()[-1]
 c = p.cells
 pickedCells = c.findAt(((BASE_LENGTH/2, 0.0, THICKNESS/2), ), ((BASE_LENGTH+ARM_LENGTH/2, 0.0, THICKNESS/2), ))
-p.PartitionCellByDatumPlane(datumPlane=d[9], cells=pickedCells)
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['armplane3']], cells=pickedCells)
 c = p.cells
 p = mdb.models['Model-1'].parts['ARM']
 c = p.cells
 pickedCells = c.findAt(((BASE_LENGTH/2, 0.0, BASE_WIDTH-THICKNESS/2), ), ((BASE_LENGTH+ARM_LENGTH/2, 0.0, BASE_WIDTH-THICKNESS/2), ))
-p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['armplane4']], cells=pickedCells)
 
-#partition payload holder flanges
+#Partitioning payload holder flanges
 ####RMW UPDATED 12-2-2021
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS)
+armDatumIndices['yz_arm_flange_thickness'] = p.datums.keys()[-1]
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS)
+armDatumIndices['vertical_yz_edgeofspoon'] = p.datums.keys()[-1]
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=TIP_HEIGHT/2)
+armDatumIndices['horizontal_long_spoon_xz_cut'] = p.datums.keys()[-1]
 c = p.cells
 pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
-p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['horizontal_long_spoon_xz_cut']], cells=pickedCells)
 
 pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
-p.PartitionCellByDatumPlane(datumPlane=d[13], cells=pickedCells)
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['yz_arm_flange_thickness']], cells=pickedCells)
 
 pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
-p.PartitionCellByDatumPlane(datumPlane=d[14], cells=pickedCells)
+p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['vertical_yz_edgeofspoon']], cells=pickedCells)
 
 p = mdb.models['Model-1'].parts['ARM']
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
 p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=BASE_HEIGHT/2)
 
-#partition spoon pull point
-armDatumIndices = {}
+#Partitioning spoon pull point node
+
 p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2)
 armDatumIndices['XZ_spoon_midplane'] = p.datums.keys()[-1]
 p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=BASE_WIDTH/2)
@@ -1107,48 +1160,6 @@ a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X
 
 ################### Old location of Composite layup
 
-##################################  
-# Create Composite Layup
-##################################  
-
-p = mdb.models['Model-1'].parts['ARM']
-v, e = p.vertices, p.edges
-    
-p.DatumCsysByThreePoints(point2=v.findAt(coordinates=(0.0, BASE_HEIGHT/2, 0.0)), #Datum 28
-    name='Datum csys-1', coordSysType=CARTESIAN, origin=(0.0, 0.0, 0.0), 
-    point1=p.InterestingPoint(edge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, 0.0)), 
-    rule=MIDDLE))
-    
-layupOrientation = mdb.models['Model-1'].parts['ARM'].datums[28]
-#28
-c = p.cells
-cells = c.findAt(((0.0, 0.0, 0.0), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH, 0.0, 0.0), 
-    ))
-region1=regionToolset.Region(cells=cells)
-region2=regionToolset.Region(cells=cells)
-region3=regionToolset.Region(cells=cells)
-compositeLayup = mdb.models['Model-1'].parts['ARM'].CompositeLayup(
-    name='CompositeLayup-1', description='', elementType=SOLID, 
-    symmetric=False, thicknessAssignment=FROM_SECTION)
-compositeLayup.ReferenceOrientation(orientationType=SYSTEM, 
-    localCsys=layupOrientation, fieldName='', 
-    additionalRotationType=ROTATION_NONE, angle=0.0, 
-    additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
-compositeLayup.CompositePly(suppressed=False, plyName='Ply-1', region=region1, 
-    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-    thickness=0.1, orientationType=ANGLE_0, 
-    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-    axis=AXIS_3, angle=0.0, numIntPoints=3)
-compositeLayup.CompositePly(suppressed=False, plyName='Ply-2', region=region2, 
-    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-    thickness=0.1, orientationType=ANGLE_0, 
-    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-    axis=AXIS_3, angle=45, numIntPoints=3)
-compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3, 
-    material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-    thickness=0.1, orientationType=ANGLE_0, 
-    additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-    axis=AXIS_3, angle=-45, numIntPoints=3)
 
 
 
