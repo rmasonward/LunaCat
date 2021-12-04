@@ -59,6 +59,9 @@ SPOON_LENGTH = 0.2 #m
 SPOON_FLANGE_THICKNESS = 0.002 #m
 SPOON_FLANGE_HEIGHT = 0.01 #m
 
+## PAYLOAD VARIABLES
+PAY_DESNITY = 0.02
+
 WALL_THICKNESS = 0.1#m
 WALL_LENGTH = 3.0 #m
 WALL_HEIGHT = 0.4 #m
@@ -391,6 +394,23 @@ s.unsetPrimaryObject()
 del mdb.models['Model-1'].sketches['__profile__']
 ########################################################################
 
+####Making Parameterized payload
+PAY_LENGTH = SPOON_LENGTH - 5.0 * SPOON_FLANGE_THICKNESS
+PAY_HEIGHT = PAY_LENGTH/2
+PAY_WIDTH = BASE_WIDTH
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
+g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=STANDALONE)
+s.rectangle(point1=(0.0, 0.0), point2=(PAY_LENGTH, PAY_HEIGHT))
+p = mdb.models['Model-1'].Part(name='Payload', dimensionality=THREE_D, 
+    type=DEFORMABLE_BODY)
+p = mdb.models['Model-1'].parts['Payload']
+p.BaseSolidExtrude(sketch=s, depth=PAY_WIDTH)
+s.unsetPrimaryObject()
+p = mdb.models['Model-1'].parts['Payload']
+del mdb.models['Model-1'].sketches['__profile__']
+
+
 ##Connecting beam
 s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
     sheetSize=10.0)
@@ -543,16 +563,23 @@ p.Round(radius=AXLE_LENGTH/8, edgeList=(e.findAt(coordinates=((AXLE_LENGTH-WALL_
 ##################################  
 
 print('Creating the Materials')
+#Creating Aluminum
 mdb.models['Model-1'].Material(name='Aluminum')
 mdb.models['Model-1'].materials['Aluminum'].Density(table=((2710.0, ), ))
 mdb.models['Model-1'].materials['Aluminum'].Elastic(table=((10000000000.0, 
     0.3), ))
 
+#Creating Graphite
 mdb.models['Model-1'].Material(name='Graphite Epoxy AS/3501')
 mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Elastic(type=LAMINA, 
     table=((137894900000.0, 8963168000.0, 2068423000.0, 
     6894745000.0, 6894745000.0, 6894745000.0), ))
 
+#Creating Payload material
+mdb.models['Model-1'].Material(name='MoonRock')
+mdb.models['Model-1'].materials['MoonRock'].Density(table=((PAY_DESNITY, ), ))
+mdb.models['Model-1'].materials['MoonRock'].Elastic(table=((10000000000.0, 
+    0.3), ))
 
 
 ##################################  
@@ -568,6 +595,10 @@ mdb.models['Model-1'].HomogeneousSolidSection(name='Section-1',
 #Creating Section 2
 mdb.models['Model-1'].HomogeneousSolidSection(name='Section-2', 
     material='Graphite Epoxy AS/3501', thickness=None)
+    
+#Creating Section 3
+mdb.models['Model-1'].HomogeneousSolidSection(name='Section-3', 
+    material='MoonRock', thickness=None)
 
 #Assigning Section 1 to SIDE WALL 1
 p = mdb.models['Model-1'].parts['Side_wall_1']
@@ -657,6 +688,16 @@ compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3,
     additionalRotationType=ROTATION_NONE, additionalRotationField='', 
     axis=AXIS_3, angle=-45, numIntPoints=3)
 
+
+#Assigning Section 3 to PAYLOAD
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+cells = c.findAt(((PAY_LENGTH/2, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+region = p.Set(cells=cells, name='Set-1')
+p = mdb.models['Model-1'].parts['Payload']
+p.SectionAssignment(region=region, sectionName='Section-3', offset=0.0, 
+    offsetType=MIDDLE_SURFACE, offsetField='', 
+    thicknessAssignment=FROM_SECTION)
 
 
 ##################################  
@@ -1093,6 +1134,25 @@ p.features['Datum pt-2'].setValues(zValue=WALL_THICKNESS)
 p = mdb.models['Model-1'].parts['Side_wall_2']
 p.regenerate()
 
+#Creating Edges on Payload for contact 
+p = mdb.models['Model-1'].parts['Payload']
+e = p.edges
+edges = e.findAt(((0.0, 0.0, PAY_WIDTH/2), ))
+p.Set(edges=edges, name='FRONT_PAYLOAD')
+p = mdb.models['Model-1'].parts['Payload']
+e = p.edges
+edges = e.findAt(((PAY_LENGTH, 0.0, PAY_WIDTH/2), ))
+p.Set(edges=edges, name='BACK_PAYLOAD')
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=0.0)
+
+
+
+
 
 ##################################  
 #Assemble Parts
@@ -1185,7 +1245,19 @@ a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X
     axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
 
 
-
+## Adding in payload instance 
+a = mdb.models['Model-1'].rootAssembly
+p = mdb.models['Model-1'].parts['Payload']
+a.Instance(name='Payload-1', part=p, dependent=ON)
+d11 = a.instances['Payload-1'].datums
+d12 = a.instances['ARM-1'].datums
+a.FaceToFace(movablePlane=d11[5], fixedPlane=d12[13], flip=OFF, clearance=0.0)
+d11 = a.instances['Payload-1'].datums
+d12 = a.instances['ARM-1'].datums
+a.FaceToFace(movablePlane=d11[7], fixedPlane=d12[19], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
+d11 = a.instances['Payload-1'].datums
+d12 = a.instances['ARM-1'].datums
+a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
 
 ################### Old location of Composite layup
 
