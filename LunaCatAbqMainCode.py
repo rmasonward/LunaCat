@@ -1,7 +1,6 @@
 """
 Description:
 This script is used to model LunaCat's final project model of a catapult.
-
 Script by:
 Peter Myers, Mason Ward, Reece Dawson, Daniel Kirby
 Dept. of Aerospace Engineering
@@ -66,6 +65,7 @@ WALL_THICKNESS = 0.1#m
 WALL_LENGTH = 3.0 #m
 WALL_HEIGHT = 0.4 #m
 
+DRAW_WIRE_RADIUS = 0.01
 
 # Axle Beam Variables
 S1 = 0.1 #m  used to sketch the cross section
@@ -88,7 +88,7 @@ Clev_Opp = CLEVIS_RAD * cos(pi/4)
 
 # New variables from top opt
 #### 5 design variables for top opt
-ToptThickness = 0.025
+ToptThickness = 0.075
 L1 = 0.6
 L2 = 0.4
 CLEVIS_EDGE_THICK = 0.05
@@ -410,7 +410,6 @@ s.unsetPrimaryObject()
 p = mdb.models['Model-1'].parts['Payload']
 del mdb.models['Model-1'].sketches['__profile__']
 
-
 ##Connecting beam
 s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
     sheetSize=10.0)
@@ -562,25 +561,24 @@ p.Round(radius=AXLE_LENGTH/8, edgeList=(e.findAt(coordinates=((AXLE_LENGTH-WALL_
 # Create Material
 ##################################  
 
-print('Creating the Materials')
 #Creating Aluminum
+print('Creating the Materials')
 mdb.models['Model-1'].Material(name='Aluminum')
 mdb.models['Model-1'].materials['Aluminum'].Density(table=((2710.0, ), ))
 mdb.models['Model-1'].materials['Aluminum'].Elastic(table=((10000000000.0, 
     0.3), ))
 
-#Creating Graphite
-mdb.models['Model-1'].Material(name='Graphite Epoxy AS/3501')
-mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Elastic(type=LAMINA, 
-    table=((137894900000.0, 8963168000.0, 2068423000.0, 
-    6894745000.0, 6894745000.0, 6894745000.0), ))
+# #Creating Graphite
+# mdb.models['Model-1'].Material(name='Graphite Epoxy AS/3501')
+# mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Elastic(type=LAMINA, 
+    # table=((137894900000.0, 8963168000.0, 2068423000.0, 
+    # 6894745000.0, 6894745000.0, 6894745000.0), ))
 
 #Creating Payload material
 mdb.models['Model-1'].Material(name='MoonRock')
 mdb.models['Model-1'].materials['MoonRock'].Density(table=((PAY_DESNITY, ), ))
 mdb.models['Model-1'].materials['MoonRock'].Elastic(table=((10000000000.0, 
     0.3), ))
-
 
 ##################################  
 #Create/Assign Section
@@ -595,7 +593,7 @@ mdb.models['Model-1'].HomogeneousSolidSection(name='Section-1',
 #Creating Section 2
 mdb.models['Model-1'].HomogeneousSolidSection(name='Section-2', 
     material='Graphite Epoxy AS/3501', thickness=None)
-    
+
 #Creating Section 3
 mdb.models['Model-1'].HomogeneousSolidSection(name='Section-3', 
     material='MoonRock', thickness=None)
@@ -688,7 +686,6 @@ compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3,
     additionalRotationType=ROTATION_NONE, additionalRotationField='', 
     axis=AXIS_3, angle=-45, numIntPoints=3)
 
-
 #Assigning Section 3 to PAYLOAD
 p = mdb.models['Model-1'].parts['Payload']
 c = p.cells
@@ -698,7 +695,6 @@ p = mdb.models['Model-1'].parts['Payload']
 p.SectionAssignment(region=region, sectionName='Section-3', offset=0.0, 
     offsetType=MIDDLE_SURFACE, offsetField='', 
     thicknessAssignment=FROM_SECTION)
-
 
 ##################################  
 #Defining the face partitions
@@ -1150,10 +1146,6 @@ p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
 p = mdb.models['Model-1'].parts['Payload']
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=0.0)
 
-
-
-
-
 ##################################  
 #Assemble Parts
 ##################################  
@@ -1228,14 +1220,17 @@ d11 = a.instances['ARM-1'].datums
 d12 = a.instances['Connector_beam-1'].datums
 a.FaceToFace(movablePlane=d11[24], fixedPlane=d12[9], flip=OFF, clearance=0.0)
 
-
 #extract locations of pull points
-# 'AXLE_CENTER_POINT'
+# 'AXLE_CENTER_POINT' CHANGES RMW 12/3
 spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].vertices[0].pointOn[0]
-clevisAxleCoords = mdb.models['Model-1'].rootAssembly.instances['Side_wall_1-1'].datums[4].pointOn
+clevisAxleCoords = mdb.models['Model-1'].rootAssembly.instances['Side_wall_1-1'].datums[4].pointOn #NOTE!!! add a dynamic refence to the datum index (like I did for the arm)
+
 print(spoonCoords)
 print(clevisAxleCoords)
+
 # spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].nodes[0].coordinates
+
+
 
 #Rotating the CLEVIS
 CLEVIS_ANGLE = 0.0 if abs(spoonCoords[0]-clevisAxleCoords[0]) < 0.001 else atan2(spoonCoords[0]-clevisAxleCoords[0],spoonCoords[1]-clevisAxleCoords[1])*180/pi
@@ -1244,6 +1239,11 @@ a = mdb.models['Model-1'].rootAssembly
 a1.rotate(instanceList=('CROSSMEMBER-1', ), axisPoint=(WALL_LENGTH - WALL_SIDE_X - CLEVIS_RAD, WALL_HEIGHT/2, WALL_THICKNESS/2), 
     axisDirection=(0.0, 0.0, -AXLE_LENGTH), angle=CLEVIS_ANGLE)
 
+pullPointCoords = mdb.models['Model-1'].rootAssembly.instances['CROSSMEMBER-1'].sets['XBEAM_PULL_POINT'].vertices[0].pointOn[0]
+print(pullPointCoords)
+ropeDistance = sqrt((pullPointCoords[0]-spoonCoords[0])**2 + (pullPointCoords[1]-spoonCoords[1])**2 + (pullPointCoords[2]-spoonCoords[2])**2)
+print(ropeDistance)
+#END CHANGES RMW 12/3
 
 ## Adding in payload instance 
 a = mdb.models['Model-1'].rootAssembly
@@ -1259,9 +1259,72 @@ d11 = a.instances['Payload-1'].datums
 d12 = a.instances['ARM-1'].datums
 a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
 
-################### Old location of Composite layup
+###############################
+#WIRE CREATION AND MANIPULATION
+###############################
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+    sheetSize=200.0)
+g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=STANDALONE)
+s.Line(point1=(pullPointCoords[0], pullPointCoords[1]), point2=(spoonCoords[0],spoonCoords[1]))
+p = mdb.models['Model-1'].Part(name='WIRE_BOI', dimensionality=THREE_D, 
+    type=DEFORMABLE_BODY)
+p = mdb.models['Model-1'].parts['WIRE_BOI']
+p.BaseWire(sketch=s)
+s.unsetPrimaryObject()
+p = mdb.models['Model-1'].parts['WIRE_BOI']
+session.viewports['Viewport: 1'].setValues(displayedObject=p)
+del mdb.models['Model-1'].sketches['__profile__']
 
+#create wire material with negative thermal expansion
+mdb.models['Model-1'].Material(name='WireMatl')
+mdb.models['Model-1'].materials['WireMatl'].Expansion(table=((-0.5, ), ))
+mdb.models['Model-1'].materials['WireMatl'].Density(table=((1000.0, ), ))
+mdb.models['Model-1'].materials['WireMatl'].Elastic(table=((10000000000.0, 
+    0.3), ))
 
+mdb.models['Model-1'].HomogeneousSolidSection(name='WireSection', 
+    material='WireMatl', thickness=None)
+del mdb.models['Model-1'].sections['WireSection']
+mdb.models['Model-1'].CircularProfile(name='WireCircProfile', r=DRAW_WIRE_RADIUS)
+mdb.models['Model-1'].BeamSection(name='WireSection', 
+    integration=DURING_ANALYSIS, poissonRatio=0.0, profile='WireCircProfile', 
+    material='WireMatl', temperatureVar=LINEAR, consistentMassMatrix=False)
+p = mdb.models['Model-1'].parts['WIRE_BOI']
+e = p.edges
+# edges = e.findAt(coordinates=((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2-XBEAM_FLAT_LENGTH/2, XBEAM_HEIGHT, XBEAM_THICKNESS/4))
+allEdges = e[:]
+region = p.Set(edges=allEdges, name='All_Wire_Edges')
+p = mdb.models['Model-1'].parts['WIRE_BOI']
+p.SectionAssignment(region=region, sectionName='WireSection', offset=0.0, 
+    offsetType=MIDDLE_SURFACE, offsetField='', 
+    thicknessAssignment=FROM_SECTION)
+    
+region=p.sets['All_Wire_Edges']
+p.assignBeamSectionOrientation(region=region, method=N1_COSINES, n1=(0.0, 0.0, 
+    -1.0))
+a = mdb.models['Model-1'].rootAssembly
+a.regenerate()
+
+#Mesh the wire with a very coarse mesh
+p.seedPart(size=1.0, deviationFactor=0.1, minSizeFactor=0.75)
+elemType1 = mesh.ElemType(elemCode=B31, elemLibrary=STANDARD)
+pickedRegions =(allEdges, )
+p.setElementType(regions=pickedRegions, elemTypes=(elemType1, ))
+p.generateMesh()
+
+#create wire instance to add to assy
+a.Instance(name='WIRE_BOI-1', part=p, dependent=ON)
+
+#create some geo sets for later
+v1 = a.instances['WIRE_BOI-1'].vertices
+verts1 = v1.findAt(((spoonCoords[0],spoonCoords[1], 0.0), ))
+a.Set(vertices=verts1, name='WireEnd_Arm')
+verts1 = v1.findAt(((pullPointCoords[0],pullPointCoords[1], 0.0), ))
+a.Set(vertices=verts1, name='WireEnd_Clevis')
+
+#translate instance
+a1.translate(instanceList=('WIRE_BOI-1', ), vector=(0.0, 0.0, spoonCoords[2]))
 
 
 ##################################  
@@ -1269,16 +1332,42 @@ a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SP
 ##################################  
 print('Defining the Steps')
 
+#configure predefined temperature field on the wire
+region = mdb.models['Model-1'].rootAssembly.instances['WIRE_BOI-1'].sets['All_Wire_Edges']
+mdb.models['Model-1'].Temperature(name='WireTemp', createStepName='Initial', 
+    region=region, distributionType=UNIFORM, 
+    crossSectionDistribution=CONSTANT_THROUGH_THICKNESS, magnitudes=(0.0, ))
+
 # Defining Loading step
 mdb.models['Model-1'].ImplicitDynamicsStep(name='Loading', previous='Initial', 
     maxNumInc=30, application=QUASI_STATIC, initialInc=0.1, nohaf=OFF, 
     amplitude=RAMP, alpha=DEFAULT, initialConditions=OFF, nlgeom=ON)
 # Defining Launch step
 mdb.models['Model-1'].ImplicitDynamicsStep(name='Launch', previous='Loading', 
-    timePeriod=2.0, application=TRANSIENT_FIDELITY, initialInc=0.2, 
+    timePeriod=0.01, application=TRANSIENT_FIDELITY, initialInc=0.01, 
+    minInc=2e-07, nohaf=OFF, initialConditions=ON)
+# Defining FollowThru step
+mdb.models['Model-1'].ImplicitDynamicsStep(name='FollowThru', previous='Launch', 
+    timePeriod=0.25, application=TRANSIENT_FIDELITY, initialInc=0.05, 
     minInc=2e-05, nohaf=OFF, initialConditions=ON)
+   
+   
+#update save increments for ODB output
+mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValuesInStep(
+    stepName='Loading', timeInterval=0.1)
+mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValuesInStep(
+    stepName='Launch', timeInterval=0.005)
+mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValuesInStep(
+    stepName='FollowThru', timeInterval=0.025)
 
+#  approximate timesteps save to ODB
+mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValues(
+    timeMarks=OFF)
 
+mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-1', timeSpan=STEP, data=((
+    0.0, 0.0), (1.0, 1.0)))
+mdb.models['Model-1'].predefinedFields['WireTemp'].setValuesInStep(
+    stepName='Loading', magnitudes=(1.0, ), amplitude='Amp-1')
 
 ##################################  
 #Create Interactions
@@ -1315,7 +1404,25 @@ mdb.models['Model-1'].Tie(name='Cross__Sidewall2', master=region1,
     slave=region2, positionToleranceMethod=COMPUTED, adjust=ON, 
     tieRotations=ON, thickness=ON)
     
-
+#Tie Wire to the clevis
+region1=a.instances['CROSSMEMBER-1'].surfaces['CLEVIS_TOP']
+region2=a.sets['WireEnd_Clevis']
+mdb.models['Model-1'].Tie(name='Lower_Wire_Tie', master=region1, slave=region2, 
+    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+    
+#Tie Wire to the Spoon Back
+region1=a.instances['ARM-1'].surfaces['SPOON_PULL_SURF']
+region2=a.sets['WireEnd_Arm']
+mdb.models['Model-1'].Tie(name='Upper_Wire_Tie', master=region1, slave=region2, 
+    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+    
+#Wire deletion step
+a = mdb.models['Model-1'].rootAssembly
+edges1 = region = mdb.models['Model-1'].rootAssembly.instances['WIRE_BOI-1'].sets['All_Wire_Edges']
+mdb.models['Model-1'].ModelChange(name='WireDeletion', createStepName='Launch', 
+    region=region, activeInStep=False, includeStrain=False)
+#: The interaction "Int-2" has been created.
+# mdb.models['Model-1'].interactions['Int-1'].reset('Launch')
 
 ##################################  
 #Create Loads
@@ -1338,7 +1445,11 @@ region = a.instances['Side_wall_2-1'].sets['Bottom']
 mdb.models['Model-1'].EncastreBC(name='Sidewall2Clamp', 
     createStepName='Initial', region=region, localCsys=None)
 
-
+#prevent wire from rotating about its axis due to roundoff error.
+region = mdb.models['Model-1'].rootAssembly.instances['WIRE_BOI-1'].sets['All_Wire_Edges']
+mdb.models['Model-1'].DisplacementBC(name='WireNoVertRotation', createStepName='Initial', 
+    region=region, u1=UNSET, u2=UNSET, u3=UNSET, ur1=SET, ur2=SET, ur3=UNSET, 
+    amplitude=UNSET, distributionType=UNIFORM, fieldName='', localCsys=None)
 
 
 ##################################  
