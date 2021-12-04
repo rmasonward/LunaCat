@@ -81,6 +81,8 @@ XBEAM_THICKNESS = 0.1 #m
 XBEAM_AXLE_DIA = 0.2 #m
 OFFSET = sqrt((BASE_HEIGHT**2)/8) ###DESIGN VARIABLE
 CLEVIS_RAD = XBEAM_AXLE_DIA/2
+Clev_Opp = CLEVIS_RAD * cos(pi/4)
+
 
 # New variables from top opt
 #### 5 design variables for top opt
@@ -903,6 +905,21 @@ p.DatumPlaneByThreePoints(point1=v1.findAt(coordinates=(P2_X, 0.0, WALL_THICKNES
 # mdb.models['Model-1'].parts['Side_wall_1'].features.changeKey(fromName='RP', 
     # toName='AXLE_CENTER_POINT')
 
+#Creating Surfaces on SidelWall 1
+#squareNotch
+p = mdb.models['Model-1'].parts['Side_wall_1']
+s = p.faces
+side1Faces = s.findAt(((P1_X+0.01, P1_Y+0.01, WALL_THICKNESS/2), ), ((P1_X-0.01, P1_Y+0.01, WALL_THICKNESS/2), ), ((P3_X-0.01, P3_Y-0.01, WALL_THICKNESS/2), ), ((P3_X+0.01, P3_Y-0.01, WALL_THICKNESS/2), ))
+p.Surface(side1Faces=side1Faces, name='SquareNotch')
+#circularNotch
+s = p.faces
+side1Faces = s.findAt(((CLEVIS_DIST + Clev_Opp, Clev_Opp, WALL_THICKNESS/2), ), ((CLEVIS_DIST - Clev_Opp, Clev_Opp, WALL_THICKNESS/2), ), ((CLEVIS_DIST + Clev_Opp, -Clev_Opp, WALL_THICKNESS/2), ), ((CLEVIS_DIST - Clev_Opp, -Clev_Opp, WALL_THICKNESS/2), ))
+p.Surface(side1Faces=side1Faces, name='CircularNotch')
+#set of the bottom for Boundry Condition
+f = p.faces
+faces = f.findAt(((X4-0.01, -WALL_HEIGHT/2, WALL_THICKNESS/2), ))
+p.Set(faces=faces, name='Bottom')
+
 #### SIDE WALL 2 will now be created ####
 p1 = mdb.models['Model-1'].parts['Side_wall_1']
 session.viewports['Viewport: 1'].setValues(displayedObject=p1)
@@ -943,6 +960,22 @@ v = p.vertices
 verts = v.findAt((((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2, XBEAM_HEIGHT, XBEAM_THICKNESS/2), ))
 p.Set(vertices=verts, name='XBEAM_PULL_POINT')
 
+### New Clevis Partioton for surface grabbing
+p = mdb.models['Model-1'].parts['CROSSMEMBER']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=WALL_THICKNESS)
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=AXLE_LENGTH-WALL_THICKNESS)
+
+c = p.cells
+pickedCells = c.findAt(((WALL_THICKNESS/2, vertOffset/2, CLEVIS_RAD+XBEAM_THICKNESS/2), ), ((WALL_THICKNESS/2, vertOffset/2, 
+    -CLEVIS_RAD+XBEAM_THICKNESS/2), ))
+d1 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d1[12], cells=pickedCells)
+p = mdb.models['Model-1'].parts['CROSSMEMBER']
+c = p.cells
+pickedCells = c.findAt(((AXLE_LENGTH-WALL_THICKNESS/2, vertOffset/2, CLEVIS_RAD +XBEAM_THICKNESS/2), ), ((AXLE_LENGTH-WALL_THICKNESS/2, vertOffset/2, 
+    -CLEVIS_RAD+XBEAM_THICKNESS/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[13], cells=pickedCells)
 
 ##################################  
 #Defining Surfaces for tie constraints (added 11/28/21 by Kirby)
@@ -952,99 +985,90 @@ p.Set(vertices=verts, name='XBEAM_PULL_POINT')
 a = mdb.models['Model-1'].rootAssembly
 p = mdb.models['Model-1'].parts['ARM']
 s = p.faces
-side1Faces = s.findAt(((0.066667, 0.03, 0.091667), ), ((0.066667, -0.03, 
-    0.136667), ), ((0.066667, 0.03, 0.003333), ), ((0.133333, -0.03, 0.091667), 
-    ), ((0.133333, -0.01, 0.0), ), ((0.133333, -0.03, 0.003333), ), ((0.133333, 
-    0.03, 0.136667), ), ((0.133333, 0.01, 0.14), ))
+side1Faces = s.findAt(((0.01, 0, 0), ), ((0.01, BASE_HEIGHT/2, THICKNESS/2), ), ((0.01, BASE_HEIGHT/2, BASE_WIDTH/2), ), ((0.01, BASE_HEIGHT/2, BASE_WIDTH-THICKNESS/2), 
+    ), ((0.01, 0, BASE_WIDTH), ), ((0.01, -BASE_HEIGHT/2, THICKNESS/2), ), ((0.01, -BASE_HEIGHT/2, BASE_WIDTH-THICKNESS/2), ), ((0.01, -BASE_HEIGHT/2, BASE_WIDTH/2), ))
 p.Surface(side1Faces=side1Faces, name='ArmBase')
+
 
 #creating surfaces on CROSSMEMBER 
 #Left side surface
 p = mdb.models['Model-1'].parts['CROSSMEMBER']
 s = p.faces
-side1Faces = s.findAt(((AXLE_LENGTH, XBEAM_AXLE_DIA/2, XBEAM_AXLE_DIA/2), ), ((AXLE_LENGTH, XBEAM_AXLE_DIA/2, 
-    0.0), ))
+side1Faces = s.findAt(((AXLE_LENGTH-WALL_THICKNESS/2, vertOffset/2, CLEVIS_RAD +XBEAM_THICKNESS/2), ), ((AXLE_LENGTH-WALL_THICKNESS/2, vertOffset/2, 
+    -CLEVIS_RAD+XBEAM_THICKNESS/2), ))
 p.Surface(side1Faces=side1Faces, name='LeftSide')
 #RightSide Surface
 s = p.faces
-side1Faces = s.findAt(((0.0, XBEAM_AXLE_DIA/2, XBEAM_AXLE_DIA/2), ), ((0.0, XBEAM_AXLE_DIA/2, 
-    0.0), ))
+side1Faces = s.findAt(((WALL_THICKNESS/2, vertOffset/2, CLEVIS_RAD+XBEAM_THICKNESS/2), ), ((WALL_THICKNESS/2, vertOffset/2, 
+    -CLEVIS_RAD+XBEAM_THICKNESS/2), ))
 p.Surface(side1Faces=side1Faces, name='RightSide')
+#top of clevis where rope attaches surface
+p = mdb.models['Model-1'].parts['CROSSMEMBER']
+s = p.faces
+zOFF = XBEAM_THICKNESS/4
+xOFF = XBEAM_FLAT_LENGTH/4
+side1Faces = s.findAt((((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2+xOFF, XBEAM_HEIGHT, XBEAM_THICKNESS/2+zOFF), ), (((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2-xOFF, XBEAM_HEIGHT, XBEAM_THICKNESS/2+zOFF), ), (((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2+xOFF, XBEAM_HEIGHT, XBEAM_THICKNESS/2-zOFF), ), (((AXLE_LENGTH-WALL_SEP_LENGTH)/2+WALL_SEP_LENGTH/2-xOFF, XBEAM_HEIGHT, XBEAM_THICKNESS/2-zOFF), ))
+p.Surface(side1Faces=side1Faces, name='CLEVIS_TOP')
 
 #Creating Surfaces on ConnectorBeam
 #leftside
 p = mdb.models['Model-1'].parts['Connector_beam']
 s = p.faces
-side1Faces = s.findAt(((-0.042929, 0.042929, AXLE_LENGTH-0.001), ), ((0.080809, 
-    0.119191, AXLE_LENGTH-0.001), ), ((-0.009596, 0.076262, AXLE_LENGTH), ), ((0.047475, 
-    0.085858, AXLE_LENGTH), ), ((0.019191, 0.180809, AXLE_LENGTH-0.001), ), ((-0.019191, 
-    0.019191, AXLE_LENGTH-0.001), ), ((0.033333, 0.033333, AXLE_LENGTH-0.001), ), ((0.057071, 
-    0.142929, AXLE_LENGTH-0.001), ), ((-0.033333, 0.166667, AXLE_LENGTH-0.001), ), ((-0.080809, 
-    0.080809, AXLE_LENGTH-0.001), ), ((-0.047475, 0.114142, AXLE_LENGTH), ))
+tempZ = AXLE_LENGTH - 0.0001
+AX4 =AXLE_DIAMETER/4
+LILOFF = AXLE_DIAMETER/20
+AX2 = AXLE_DIAMETER/2
+side1Faces = s.findAt(((-AX4, AX2 + AX4, tempZ), ), ((AX4, 
+    AX4+AX2, tempZ), ), ((AX4, AX4, tempZ), ), ((-AX4, 
+    AX4, tempZ), ), ((-LILOFF, LILOFF, tempZ), ), ((-AX2+LILOFF, 
+    AX2 - LILOFF, tempZ), ), ((LILOFF, AXLE_DIAMETER-LILOFF, tempZ), ), ((AX2-LILOFF, 
+    AX2+LILOFF, tempZ), ))
 p.Surface(side1Faces=side1Faces, name='LeftSide')
 #rightSide
 s = p.faces
-side1Faces = s.findAt(((-0.019191, 0.019191, 0.01), ), ((0.047475, 
-    0.085858, 0.0), ), ((0.057071, 0.142929, 0.01), ), ((-0.047475, 
-    0.114142, 0.0), ), ((0.080809, 0.119191, 0.01), ), ((-0.080809, 
-    0.080809, 0.01), ), ((0.066667, 0.066667, 0.01), ), ((-0.042929, 
-    0.042929, 0.01), ), ((-0.066667, 0.133333, 0.01), ), ((0.019191, 
-    0.180809, 0.01), ), ((-0.009596, 0.076262, 0.0), ))
+tempZ = 0.0001
+side1Faces = s.findAt(((-AX4, AX2 + AX4, tempZ), ), ((AX4, 
+    AX4+AX2, tempZ), ), ((AX4, AX4, tempZ), ), ((-AX4, 
+    AX4, tempZ), ), ((-LILOFF, LILOFF, tempZ), ), ((-AX2+LILOFF, 
+    AX2 - LILOFF, tempZ), ), ((LILOFF, AXLE_DIAMETER-LILOFF, tempZ), ), ((AX2-LILOFF, 
+    AX2+LILOFF, tempZ), ))
 p.Surface(side1Faces=side1Faces, name='RightSide')
 #middleHole
 s = p.faces
-side1Faces = s.findAt(((-0.023738, 0.090404, 0.93), ), ((-0.03788, 0.104547, 
-    1.023333), ), ((-0.009596, 0.076262, 1.07), ), ((0.004547, 0.06212, 
-    0.976667), ))
+dumdum = BASE_HEIGHT/2 * cos(pi/4)
+side1Faces = s.findAt(((0, AX2, AXLE_LENGTH/2-BASE_WIDTH/2), ), ((0, AX2, AXLE_LENGTH/2+BASE_WIDTH/2), ), ((dumdum, AX2-dumdum, AXLE_LENGTH/2), ), ((-dumdum, AX2+dumdum, AXLE_LENGTH/2), ))
 p.Surface(side1Faces=side1Faces, name='MiddleHole')
+
+
 
 #Creating Surfaces on SidelWall 1
 #squareNotch
 p = mdb.models['Model-1'].parts['Side_wall_1']
 s = p.faces
-side1Faces = s.findAt(((0.466667, 0.233333, 0.05), ), ((0.533333, 0.166667, 
-    0.05), ), ((0.533333, 0.233333, 0.05), ), ((0.433333, 0.166667, 0.033333), 
-    ), ((0.466667, 0.266667, 0.033333), ), ((0.566667, 0.233333, 0.033333), ), 
-    ((0.533333, 0.133333, 0.033333), ), ((0.466667, 0.166667, 0.05), ))
+side1Faces = s.findAt(((P1_X+0.01, P1_Y+0.01, WALL_THICKNESS/2), ), ((P1_X-0.01, P1_Y+0.01, WALL_THICKNESS/2), ), ((P3_X-0.01, P3_Y-0.01, WALL_THICKNESS/2), ), ((P3_X+0.01, P3_Y-0.01, WALL_THICKNESS/2), ))
 p.Surface(side1Faces=side1Faces, name='SquareNotch')
 #circularNotch
 s = p.faces
-side1Faces = s.findAt(((1.512978, 0.100846, 0.033333), ), ((1.512756, 0.135871, 
-    0.05), ), ((1.512756, 0.264129, 0.05), ), ((1.512978, 0.299154, 0.016667), 
-    ), ((1.487244, 0.135871, 0.05), ), ((1.487022, 0.299154, 0.033333), ), ((
-    1.487022, 0.100846, 0.016667), ), ((1.487244, 0.264129, 0.05), ))
+side1Faces = s.findAt(((CLEVIS_DIST + Clev_Opp, Clev_Opp, WALL_THICKNESS/2), ), ((CLEVIS_DIST - Clev_Opp, Clev_Opp, WALL_THICKNESS/2), ), ((CLEVIS_DIST + Clev_Opp, -Clev_Opp, WALL_THICKNESS/2), ), ((CLEVIS_DIST - Clev_Opp, -Clev_Opp, WALL_THICKNESS/2), ))
 p.Surface(side1Faces=side1Faces, name='CircularNotch')
 #set of the bottom for Boundry Condition
 f = p.faces
-faces = f.findAt(((0.333333, 0.0, 0.033333), ), ((0.333333, 0.0, 0.083333), ), 
-    ((1.333333, 0.0, 0.033333), ), ((1.333333, 0.0, 0.083333), ), ((1.666667, 
-    0.0, 0.066667), ), ((0.666667, 0.0, 0.016667), ), ((0.666667, 0.0, 
-    0.066667), ), ((1.666667, 0.0, 0.016667), ))
+faces = f.findAt(((X4-0.01, -WALL_HEIGHT/2, WALL_THICKNESS/2), ))
 p.Set(faces=faces, name='Bottom')
 
-#Creating Surfaces on SideWall 2
-#squareNotch
+#### SIDE WALL 2 will now be created ####
+p1 = mdb.models['Model-1'].parts['Side_wall_1']
+session.viewports['Viewport: 1'].setValues(displayedObject=p1)
+p = mdb.models['Model-1'].Part(name='Side_wall_2', 
+    objectToCopy=mdb.models['Model-1'].parts['Side_wall_1'])
 p = mdb.models['Model-1'].parts['Side_wall_2']
-s = p.faces
-side1Faces = s.findAt(((0.466667, 0.166667, 0.05), ), ((0.466667, 0.233333, 
-    0.05), ), ((0.533333, 0.166667, 0.05), ), ((0.566667, 0.166667, 0.066667), 
-    ), ((0.533333, 0.266667, 0.066667), ), ((0.433333, 0.233333, 0.066667), ), 
-    ((0.466667, 0.133333, 0.066667), ), ((0.533333, 0.233333, 0.05), ))
-p.Surface(side1Faces=side1Faces, name='SquareNotch')
-#circularNotch
-s = p.faces
-side1Faces = s.findAt(((1.487022, 0.100846, 0.066667), ), ((1.487244, 0.135871, 
-    0.05), ), ((1.487244, 0.264129, 0.05), ), ((1.512978, 0.299154, 0.066667), 
-    ), ((1.512756, 0.135871, 0.05), ), ((1.512978, 0.100846, 0.083333), ), ((
-    1.487022, 0.299154, 0.083333), ), ((1.512756, 0.264129, 0.05), ))
-p.Surface(side1Faces=side1Faces, name='CircularNotch')
-#set of the bottom for Boundry Condition
-f = p.faces
-faces = f.findAt(((0.666667, 0.0, 0.066667), ), ((0.666667, 0.0, 0.016667), ), 
-    ((1.666667, 0.0, 0.066667), ), ((1.666667, 0.0, 0.016667), ), ((1.333333, 
-    0.0, 0.083333), ), ((1.333333, 0.0, 0.033333), ), ((0.333333, 0.0, 
-    0.083333), ), ((0.333333, 0.0, 0.033333), ))
-p.Set(faces=faces, name='Bottom')
+p.features['Datum pt-1'].setValues(zValue=WALL_THICKNESS)
+p = mdb.models['Model-1'].parts['Side_wall_2']
+p.regenerate()
+p = mdb.models['Model-1'].parts['Side_wall_2']
+p.features['Datum pt-2'].setValues(zValue=WALL_THICKNESS)
+p = mdb.models['Model-1'].parts['Side_wall_2']
+p.regenerate()
 
 
 ##################################  
@@ -1105,7 +1129,7 @@ a = mdb.models['Model-1'].rootAssembly
 d1 = a.instances['CROSSMEMBER-1'].datums
 d2 = a.instances['Side_wall_1-1'].datums
 a.CoincidentPoint(movablePoint=d1[10], fixedPoint=d2[4])
-    
+
 #Instance bt ARM and AXLE
 p = mdb.models['Model-1'].parts['ARM']
 a.Instance(name='ARM-1', part=p, dependent=ON)
