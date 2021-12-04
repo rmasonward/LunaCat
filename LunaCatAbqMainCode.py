@@ -977,22 +977,41 @@ d2 = p.datums
 p.PartitionCellByDatumPlane(datumPlane=d2[13], cells=pickedCells)
 
 ##################################  
-#Defining Surfaces for tie constraints (added 11/28/21 by Kirby)
-################################## 
+#Define Surfaces
+##################################  
+print('Defining Surfaces')
+########### Start of Temp Code #################
 
-#creating surfaces on ARM
+###########creating surfaces on ARM
+# creating surface of base of the arm
+
 a = mdb.models['Model-1'].rootAssembly
 p = mdb.models['Model-1'].parts['ARM']
 s = p.faces
 side1Faces = s.findAt(((0.01, 0, 0), ), ((0.01, BASE_HEIGHT/2, THICKNESS/2), ), ((0.01, BASE_HEIGHT/2, BASE_WIDTH/2), ), ((0.01, BASE_HEIGHT/2, BASE_WIDTH-THICKNESS/2), 
     ), ((0.01, 0, BASE_WIDTH), ), ((0.01, -BASE_HEIGHT/2, THICKNESS/2), ), ((0.01, -BASE_HEIGHT/2, BASE_WIDTH-THICKNESS/2), ), ((0.01, -BASE_HEIGHT/2, BASE_WIDTH/2), ))
 p.Surface(side1Faces=side1Faces, name='ArmBase')
-cords = (BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, -TIP_HEIGHT/2, BASE_WIDTH/2)
+#creating surface of the bottom of the spoon on arm
 xOff = SPOON_LENGTH/4
 zOff = BASE_WIDTH/4
 s = p.faces
 side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, -TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, -TIP_HEIGHT/2, BASE_WIDTH/2 -zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, -TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, -TIP_HEIGHT/2, BASE_WIDTH/2-zOff), ))
 p.Surface(side1Faces=side1Faces, name='SPOON_PULL_SURF')
+#creating surface of the two L members that form spoon 
+
+p = mdb.models['Model-1'].parts['ARM']
+s = p.faces
+coord = BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS, BASE_WIDTH/2
+side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, BASE_WIDTH/2), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS, BASE_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='SPOON_FRONT')
+
+
+p = mdb.models['Model-1'].parts['ARM']
+s = p.faces
+coord = BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, BASE_WIDTH/2
+side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS-(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS, BASE_WIDTH/2), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, BASE_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='SPOON_BACK')
+
 
 #creating surfaces on CROSSMEMBER 
 #Left side surface
