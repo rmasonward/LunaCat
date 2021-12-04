@@ -35,7 +35,6 @@ from math import atan2, atan, sin, cos, tan, sqrt
 #from Post_P_Script import getResults
 
 
-
 ######################################
 # Variable and Fixed Design Parameters
 ######################################
@@ -45,17 +44,17 @@ YOUNG_MOD = 70e9 #N/m^2
 POISSON = 0.3
 DENS = 2720. #kg/m^3
 
-BASE_WIDTH = 0.14 #m ###DESIGN VARIABLE
-BASE_HEIGHT = 0.06 #m ###DESIGN VARIABLE
+BASE_WIDTH = 0.15 #m ###DESIGN VARIABLE
+BASE_HEIGHT = 0.07 #m ###DESIGN VARIABLE
 
 TIP_HEIGHT = 0.02 #m
 
-THICKNESS = 0.005 #m ###DESIGN VARIABLE
+THICKNESS = 0.004 #m ###DESIGN VARIABLE
 if THICKNESS*2 > min(BASE_HEIGHT,BASE_WIDTH,TIP_HEIGHT):
     raise ValueError("Thickness is too big")
 
 BASE_LENGTH = 0.2 #m
-ARM_LENGTH = 2.4 #m ###DESIGN VARIABLE
+ARM_LENGTH = 3.7 #m ###DESIGN VARIABLE
 SPOON_LENGTH = 0.2 #m
 SPOON_FLANGE_THICKNESS = 0.002 #m
 SPOON_FLANGE_HEIGHT = 0.01 #m
@@ -67,7 +66,7 @@ WALL_HEIGHT = 0.4 #m
 
 # Axle Beam Variables
 S1 = 0.1 #m  used to sketch the cross section
-AXLE_LENGTH = .6 #m ###DESIGN VARIABLE
+AXLE_LENGTH = 1.2 #m ###DESIGN VARIABLE
 #This breaks when changing value over 1
 AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross section
 
@@ -75,7 +74,7 @@ AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross se
 # Cross Member Variables
 WALL_SEP_LENGTH = AXLE_LENGTH-2*WALL_THICKNESS #m
 
-XBEAM_HEIGHT = 0.7 #m
+XBEAM_HEIGHT = 0.3 #m
 XBEAM_FLAT_LENGTH = 0.02 #m
 XBEAM_THICKNESS = 0.1 #m
 XBEAM_AXLE_DIA = 0.2 #m
@@ -86,9 +85,9 @@ Clev_Opp = CLEVIS_RAD * cos(pi/4)
 
 # New variables from top opt
 #### 5 design variables for top opt
-ToptThickness = 0.05
-L1 = 0.5
-L2 = 0.3
+ToptThickness = 0.025
+L1 = 0.6
+L2 = 0.4
 CLEVIS_EDGE_THICK = 0.05
 XBEAM_EDGE_THICK = 0.05
 
@@ -988,7 +987,12 @@ s = p.faces
 side1Faces = s.findAt(((0.01, 0, 0), ), ((0.01, BASE_HEIGHT/2, THICKNESS/2), ), ((0.01, BASE_HEIGHT/2, BASE_WIDTH/2), ), ((0.01, BASE_HEIGHT/2, BASE_WIDTH-THICKNESS/2), 
     ), ((0.01, 0, BASE_WIDTH), ), ((0.01, -BASE_HEIGHT/2, THICKNESS/2), ), ((0.01, -BASE_HEIGHT/2, BASE_WIDTH-THICKNESS/2), ), ((0.01, -BASE_HEIGHT/2, BASE_WIDTH/2), ))
 p.Surface(side1Faces=side1Faces, name='ArmBase')
-
+cords = (BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, -TIP_HEIGHT/2, BASE_WIDTH/2)
+xOff = SPOON_LENGTH/4
+zOff = BASE_WIDTH/4
+s = p.faces
+side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, -TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, -TIP_HEIGHT/2, BASE_WIDTH/2 -zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, -TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, -TIP_HEIGHT/2, BASE_WIDTH/2-zOff), ))
+p.Surface(side1Faces=side1Faces, name='SPOON_PULL_SURF')
 
 #creating surfaces on CROSSMEMBER 
 #Left side surface
@@ -1133,36 +1137,18 @@ a.CoincidentPoint(movablePoint=d1[10], fixedPoint=d2[4])
 #Instance bt ARM and AXLE
 p = mdb.models['Model-1'].parts['ARM']
 a.Instance(name='ARM-1', part=p, dependent=ON)
-p1 = a.instances['ARM-1']
-p1.translate(vector=(2.334, 0.0, 0.0))
 a = mdb.models['Model-1'].rootAssembly
-d1 = a.instances['ARM-1'].datums
-d2 = a.instances['Side_wall_2-1'].datums
-a.FaceToFace(movablePlane=d1[19], fixedPlane=d2[25], flip=OFF, clearance=0.0)
-a1 = mdb.models['Model-1'].rootAssembly
-d1 = a1.instances['ARM-1'].datums
-d2 = a1.instances['Connector_beam-1'].datums
-a1.FaceToFace(movablePlane=d1[20], fixedPlane=d2[9], flip=OFF, clearance=0.0)
-a1 = mdb.models['Model-1'].rootAssembly
-d1 = a1.instances['ARM-1'].datums
-d2 = a1.instances['Connector_beam-1'].datums
-a1.FaceToFace(movablePlane=d1[21], fixedPlane=d2[10], flip=ON, clearance=0.0)
-#: The instance "ARM-1" is fully constrained
+d11 = a.instances['ARM-1'].datums
+d12 = a.instances['Connector_beam-1'].datums
+a.FaceToFace(movablePlane=d11[23], fixedPlane=d12[11], flip=OFF, clearance=0.0)
+p = mdb.models['Model-1'].parts['Side_wall_1']
+d11 = a.instances['ARM-1'].datums
+d12 = a.instances['Connector_beam-1'].datums
+a.FaceToFace(movablePlane=d11[25], fixedPlane=d12[10], flip=ON, clearance=0.0)
+d11 = a.instances['ARM-1'].datums
+d12 = a.instances['Connector_beam-1'].datums
+a.FaceToFace(movablePlane=d11[24], fixedPlane=d12[9], flip=OFF, clearance=0.0)
 
-# a = mdb.models['Model-1'].rootAssembly
-# p = mdb.models['Model-1'].parts['ARM']
-# a.Instance(name='ARM-1', part=p, dependent=ON)
-# a = mdb.models['Model-1'].rootAssembly
-# d1 = a.instances['ARM-1'].datums
-# d2 = a.instances['Side_wall_2-1'].datums
-# a.FaceToFace(movablePlane=d1[19], fixedPlane=d2[10], flip=ON, clearance=0.0)
-# d1 = a.instances['ARM-1'].datums
-# d2 = a.instances['Connector_beam-1'].datums
-# a.FaceToFace(movablePlane=d1[21], fixedPlane=d2[10], flip=ON, clearance=0.0)
-# d1 = a.instances['ARM-1'].datums
-# d2 = a.instances['Connector_beam-1'].datums
-# a.FaceToFace(movablePlane=d1[20], fixedPlane=d2[9], flip=OFF, clearance=0.0)
-# #: The instance "ARM-1" is fully constrained
 
 #extract locations of pull points
 # 'AXLE_CENTER_POINT'
@@ -1238,48 +1224,6 @@ mdb.models['Model-1'].Tie(name='Cross__Sidewall2', master=region1,
     slave=region2, positionToleranceMethod=COMPUTED, adjust=ON, 
     tieRotations=ON, thickness=ON)
     
-#Creating Torsional Spring connector 
-mdb.models['Model-1'].ConnectorSection(name='ConnSect-1', 
-    rotationalType=ROTATION)
-elastic_0 = connectorBehavior.ConnectorElasticity(components=(4, ), table=((
-    420.0, ), )) #Change this value for stiffness coefficient 
-mdb.models['Model-1'].sections['ConnSect-1'].setValues(behaviorOptions =(
-    elastic_0, ) )
-mdb.models['Model-1'].sections['ConnSect-1'].behaviorOptions[0].ConnectorOptions(
-    )
-a = mdb.models['Model-1'].rootAssembly
-d1 = a.instances['Side_wall_2-1'].datums
-rp1 = a.ReferencePoint(point=d1[7])
-rpid1 = a.referencePoints[rp1.id]
-oldName = rp1.name
-mdb.models['Model-1'].rootAssembly.features.changeKey(fromName=oldName, 
-    toName='RP-1')
-e1 = a.instances['Side_wall_1-1'].edges
-rp2 = a.ReferencePoint(point=a.instances['Side_wall_1-1'].InterestingPoint(
-    edge=e1.findAt(coordinates=(0.475, 0.2, 0.05)), rule=MIDDLE))
-rpid2 = a.referencePoints[rp2.id]
-oldName = rp2.name
-mdb.models['Model-1'].rootAssembly.features.changeKey(fromName=oldName, 
-    toName='RP-2')
-dtm1 = a.DatumCsysByThreePoints(origin=d1[7], coordSysType=CARTESIAN, 
-    point1=a.instances['Side_wall_1-1'].InterestingPoint(edge=e1.findAt(
-    coordinates=(0.475, 0.2, 0.05)), rule=MIDDLE), isZ=True)
-dtmid1 = a.datums[dtm1.id]
-a = mdb.models['Model-1'].rootAssembly
-wire = a.WirePolyLine(points=((rpid1, rpid2), ), mergeType=IMPRINT, 
-    meshable=False)
-oldName = wire.name
-mdb.models['Model-1'].rootAssembly.features.changeKey(fromName=oldName, 
-    toName='Wire-1')
-a = mdb.models['Model-1'].rootAssembly
-e1 = a.edges
-edges1 = e1.findAt(((0.4875, 0.2, -0.25), ))
-a.Set(edges=edges1, name='Wire-1-Set-1')
-region = mdb.models['Model-1'].rootAssembly.sets['Wire-1-Set-1']
-csa = a.SectionAssignment(sectionName='ConnSect-1', region=region)
-#: The section "ConnSect-1" has been assigned to 1 wire or attachment line.
-a.ConnectorOrientation(region=csa.getSet(), localCsys1=dtmid1)
-
 
 
 ##################################  
@@ -1312,18 +1256,7 @@ mdb.models['Model-1'].EncastreBC(name='Sidewall2Clamp',
 print('Defining Sets')
 ########### Start of Temp Code #################
 # create set of bottom of arm
-p = mdb.models['Model-1'].parts['ARM']
-f = p.faces
-faces = f.findAt(((ARM_LENGTH+WALL_SIDE_X, 0.0, 0.0), ))
-p.Set(faces=faces, name='TipOfArm')
 
-# displace bottom of arm for loading and release for launch
-region = a.instances['ARM-1'].sets['TipOfArm']
-mdb.models['Model-1'].DisplacementBC(name='Winch', createStepName='Loading', 
-    region=region, u1=0.1, u2=-0.5, u3=0.0, ur1=0.0, ur2=0.0, ur3=UNSET, 
-    amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
-    localCsys=None)
-mdb.models['Model-1'].boundaryConditions['Winch'].deactivate('Launch')
 
 
 
@@ -1331,129 +1264,7 @@ mdb.models['Model-1'].boundaryConditions['Winch'].deactivate('Launch')
 #Mesh Parts
 ##################################  
 print('Meshing the Part')
-###Temporary meshing ARM
-p = mdb.models['Model-1'].parts['ARM']
-c = p.cells
-pickedCells = c.findAt(((2.395333, 0.012, 0.046667), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
-p.seedPart(size=0.05, deviationFactor=0.1, minSizeFactor=0.1)
-p = mdb.models['Model-1'].parts['ARM']
-p.generateMesh()
-###Temporary meshing ConnectorBeam
-# p = mdb.models['Model-1'].parts['Connector_beam']
-# p.seedPart(size=0.044, deviationFactor=0.1, minSizeFactor=0.1)
-# p.generateMesh()
-###Temporary meshing CROSSBEAM
-p = mdb.models['Model-1'].parts['CROSSMEMBER']
-c = p.cells
-pickedRegions = c.findAt(((2.0, 0.105796, 0.037244), ), ((0.0, 0.105796, 
-    0.037244), ), ((0.0, 0.105796, 0.062756), ), ((2.0, 0.105796, 0.062756), ))
-p.setMeshControls(regions=pickedRegions, elemShape=TET, technique=FREE)
-elemType1 = mesh.ElemType(elemCode=C3D20R)
-elemType2 = mesh.ElemType(elemCode=C3D15)
-elemType3 = mesh.ElemType(elemCode=C3D10)
-p = mdb.models['Model-1'].parts['CROSSMEMBER']
-c = p.cells
-cells = c.findAt(((2.0, 0.105796, 0.037244), ), ((0.0, 0.105796, 0.037244), ), 
-    ((0.0, 0.105796, 0.062756), ), ((2.0, 0.105796, 0.062756), ))
-pickedRegions =(cells, )
-p.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2, 
-    elemType3))
-p = mdb.models['Model-1'].parts['CROSSMEMBER']
-p.seedPart(size=0.052, deviationFactor=0.1, minSizeFactor=0.1)
-p = mdb.models['Model-1'].parts['CROSSMEMBER']
-p.generateMesh()
-###Temporary meshing SideWalls
-p = mdb.models['Model-1'].parts['Side_wall_1']
-c = p.cells
-pickedRegions = c.findAt(((0.433333, 0.166667, 0.033333), ), ((0.466667, 
-    0.166667, 0.05), ), ((0.466667, 0.266667, 0.033333), ), ((0.666667, 0.0, 
-    0.016667), ), ((0.533333, 0.166667, 0.05), ), ((0.666667, 0.4, 0.033333), 
-    ), ((0.466667, 0.233333, 0.05), ), ((1.487022, 0.100846, 0.016667), ), ((
-    1.487244, 0.135871, 0.05), ), ((1.512978, 0.100846, 0.033333), ), ((
-    1.933333, 0.066667, 0.066667), ), ((1.512978, 0.299154, 0.016667), ), ((
-    1.333333, 0.333333, 0.1), ), ((0.533333, 0.233333, 0.05), ), ((1.512756, 
-    0.264129, 0.05), ))
-p.setMeshControls(regions=pickedRegions, elemShape=TET, technique=FREE)
-elemType1 = mesh.ElemType(elemCode=C3D20R)
-elemType2 = mesh.ElemType(elemCode=C3D15)
-elemType3 = mesh.ElemType(elemCode=C3D10)
-p = mdb.models['Model-1'].parts['Side_wall_1']
-c = p.cells
-cells = c.findAt(((0.433333, 0.166667, 0.033333), ), ((0.466667, 0.166667, 
-    0.05), ), ((0.466667, 0.266667, 0.033333), ), ((0.666667, 0.0, 0.016667), 
-    ), ((0.533333, 0.166667, 0.05), ), ((0.666667, 0.4, 0.033333), ), ((
-    0.466667, 0.233333, 0.05), ), ((1.487022, 0.100846, 0.016667), ), ((
-    1.487244, 0.135871, 0.05), ), ((1.512978, 0.100846, 0.033333), ), ((
-    1.933333, 0.066667, 0.066667), ), ((1.512978, 0.299154, 0.016667), ), ((
-    1.333333, 0.333333, 0.1), ), ((0.533333, 0.233333, 0.05), ), ((1.512756, 
-    0.264129, 0.05), ))
-pickedRegions =(cells, )
-p.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2, 
-    elemType3))
-p = mdb.models['Model-1'].parts['Side_wall_1']
-c = p.cells
-pickedRegions = c.findAt(((1.487022, 0.299154, 0.033333), ))
-p.setMeshControls(regions=pickedRegions, elemShape=TET, technique=FREE)
-elemType1 = mesh.ElemType(elemCode=C3D20R)
-elemType2 = mesh.ElemType(elemCode=C3D15)
-elemType3 = mesh.ElemType(elemCode=C3D10)
-p = mdb.models['Model-1'].parts['Side_wall_1']
-c = p.cells
-cells = c.findAt(((1.487022, 0.299154, 0.033333), ))
-pickedRegions =(cells, )
-p.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2, 
-    elemType3))
-p = mdb.models['Model-1'].parts['Side_wall_1']
-p.seedPart(size=0.05, deviationFactor=0.1, minSizeFactor=0.1)
-p = mdb.models['Model-1'].parts['Side_wall_1']
-p.generateMesh()
-p = mdb.models['Model-1'].parts['Side_wall_2']
-c = p.cells
-pickedRegions = c.findAt(((0.466667, 0.133333, 0.066667), ), ((0.466667, 
-    0.166667, 0.05), ), ((0.433333, 0.233333, 0.066667), ), ((0.666667, 0.0, 
-    0.066667), ), ((0.533333, 0.166667, 0.05), ), ((0.533333, 0.266667, 
-    0.066667), ), ((0.666667, 0.4, 0.033333), ), ((1.487022, 0.100846, 
-    0.066667), ), ((1.487244, 0.135871, 0.05), ), ((1.333333, 0.4, 0.066667), 
-    ), ((1.512978, 0.100846, 0.083333), ), ((1.866667, 0.133333, 0.033333), ), 
-    ((1.512978, 0.299154, 0.066667), ), ((1.487244, 0.264129, 0.05), ), ((
-    0.466667, 0.4, 0.016667), ), ((1.733333, 0.266667, 0.016667), ))
-p.setMeshControls(regions=pickedRegions, elemShape=TET, technique=FREE)
-elemType1 = mesh.ElemType(elemCode=C3D20R)
-elemType2 = mesh.ElemType(elemCode=C3D15)
-elemType3 = mesh.ElemType(elemCode=C3D10)
-c = p.cells
-cells = c.findAt(((0.466667, 0.133333, 0.066667), ), ((0.466667, 0.166667, 
-    0.05), ), ((0.433333, 0.233333, 0.066667), ), ((0.666667, 0.0, 0.066667), 
-    ), ((0.533333, 0.166667, 0.05), ), ((0.533333, 0.266667, 0.066667), ), ((
-    0.666667, 0.4, 0.033333), ), ((1.487022, 0.100846, 0.066667), ), ((
-    1.487244, 0.135871, 0.05), ), ((1.333333, 0.4, 0.066667), ), ((1.512978, 
-    0.100846, 0.083333), ), ((1.866667, 0.133333, 0.033333), ), ((1.512978, 
-    0.299154, 0.066667), ), ((1.487244, 0.264129, 0.05), ), ((0.466667, 0.4, 
-    0.016667), ), ((1.733333, 0.266667, 0.016667), ))
-pickedRegions =(cells, )
-p.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2, 
-    elemType3))
-p.seedPart(size=0.05, deviationFactor=0.1, minSizeFactor=0.1)
-p.generateMesh()
-p = mdb.models['Model-1'].parts['ARM']
-del mdb.models['Model-1'].parts['ARM'].sectionAssignments[0]
-p = mdb.models['Model-1'].parts['ARM']
-region = p.sets['Set-1']
-p = mdb.models['Model-1'].parts['ARM']
-p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0, 
-    offsetType=MIDDLE_SURFACE, offsetField='', 
-    thicknessAssignment=FROM_SECTION)
-del mdb.models['Model-1'].materials['Graphite Epoxy AS/3501']
-del mdb.models['Model-1'].sections['Section-2']
 
-#meshing the axle
-p = mdb.models['Model-1'].parts['Connector_beam']
-p.seedPart(size=0.014, deviationFactor=0.1, minSizeFactor=0.1)
-p = mdb.models['Model-1'].parts['Connector_beam']
-p.generateMesh()
-STTAAHHHPPPP
 
 
 
