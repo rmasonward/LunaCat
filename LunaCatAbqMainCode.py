@@ -567,19 +567,15 @@ mdb.models['Model-1'].materials['Aluminum'].Density(table=((2710.0, ), ))
 mdb.models['Model-1'].materials['Aluminum'].Elastic(table=((69000000000.0, 
     0.3), ))
 
-#Creating Graphite
-mdb.models['Model-1'].Material(name='Graphite Epoxy AS/3501')
-mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Elastic(type=ENGINEERING_CONSTANTS, 
-    table=((137894900000.0, 8963168000.0, 
-    8963168000.0, 2068423000.0, 2068423000.0, 2068423000.0, 6894745000.0, 
-    6894745000.0, 0.0), ))
-# mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Elastic(type=LAMINA, 
-    # table=((137894900000.0, 8963168000.0, 2068423000.0, 
-    # 6894745000.0, 6894745000.0, 6894745000.0), ))
-mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Density(table=((
-    1610.0, ), ))
-mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].elastic.setValues(
-    type=SHEAR, table=((4640000000.0, ), ))
+# #Creating Graphite
+# mdb.models['Model-1'].Material(name='Graphite Epoxy AS/3501')
+# mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Elastic(type=ENGINEERING_CONSTANTS, 
+    # table=((137894900000.0, 8963168000.0, 
+    # 8963168000.0, 2068423000.0, 2068423000.0, 2068423000.0, 6894745000.0, 
+    # 6894745000.0, 6894745000.0), ))
+# mdb.models['Model-1'].materials['Graphite Epoxy AS/3501'].Density(table=((
+    # 1610.0, ), ))
+
     
 #Creating Payload material
 mdb.models['Model-1'].Material(name='MoonRock')
@@ -636,17 +632,28 @@ p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0,
     offsetType=MIDDLE_SURFACE, offsetField='', 
     thicknessAssignment=FROM_SECTION)
 
-#Assigning Section 2 to ARM
+#Assigning Section 1 to ARM
 p = mdb.models['Model-1'].parts['ARM']
 c = p.cells
 cells = c.findAt(((0.0, 0.0, 0.0), ))
 region = p.Set(cells=cells, name='Set-1')
 p = mdb.models['Model-1'].parts['ARM']
-p.SectionAssignment(region=region, sectionName='Section-2', offset=0.0, 
+p.SectionAssignment(region=region, sectionName='Section-1', offset=0.0, 
     offsetType=MIDDLE_SURFACE, offsetField='', 
     thicknessAssignment=FROM_SECTION)
 
-
+#Assigning Section 3 to PAYLOAD
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+cells = c.findAt(((PAY_LENGTH/2, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+region = p.Set(cells=cells, name='Set-1')
+p = mdb.models['Model-1'].parts['Payload']
+p.SectionAssignment(region=region, sectionName='Section-3', offset=0.0, 
+    offsetType=MIDDLE_SURFACE, offsetField='', 
+    thicknessAssignment=FROM_SECTION)
+    
+    
+    
 ##################################  
 # Create Composite Layup
 ##################################  
@@ -677,31 +684,23 @@ compositeLayup.ReferenceOrientation(orientationType=SYSTEM,
     localCsys=layupOrientation, fieldName='', 
     additionalRotationType=ROTATION_NONE, angle=0.0, 
     additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
-compositeLayup.CompositePly(suppressed=False, plyName='Ply-1', region=region1, 
+compositeLayup.CompositePly(suppressed=True, plyName='Ply-1', region=region1, 
     material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
     thickness=0.1, orientationType=ANGLE_0, 
     additionalRotationType=ROTATION_NONE, additionalRotationField='', 
     axis=AXIS_3, angle=0.0, numIntPoints=3)
-compositeLayup.CompositePly(suppressed=False, plyName='Ply-2', region=region2, 
+compositeLayup.CompositePly(suppressed=True, plyName='Ply-2', region=region2, 
     material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
     thickness=0.1, orientationType=ANGLE_0, 
     additionalRotationType=ROTATION_NONE, additionalRotationField='', 
     axis=AXIS_3, angle=45, numIntPoints=3)
-compositeLayup.CompositePly(suppressed=False, plyName='Ply-3', region=region3, 
+compositeLayup.CompositePly(suppressed=True, plyName='Ply-3', region=region3, 
     material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
     thickness=0.1, orientationType=ANGLE_0, 
     additionalRotationType=ROTATION_NONE, additionalRotationField='', 
     axis=AXIS_3, angle=-45, numIntPoints=3)
 
-#Assigning Section 3 to PAYLOAD
-p = mdb.models['Model-1'].parts['Payload']
-c = p.cells
-cells = c.findAt(((PAY_LENGTH/2, PAY_HEIGHT/2, PAY_WIDTH/2), ))
-region = p.Set(cells=cells, name='Set-1')
-p = mdb.models['Model-1'].parts['Payload']
-p.SectionAssignment(region=region, sectionName='Section-3', offset=0.0, 
-    offsetType=MIDDLE_SURFACE, offsetField='', 
-    thicknessAssignment=FROM_SECTION)
+
 
 ##################################  
 #Defining the face partitions
@@ -1298,6 +1297,7 @@ mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayloadContact',
     clearanceRegion=None)
 #: The interaction "FrontPayloadContact" has been created.
 
+
 ###############################
 #WIRE CREATION AND MANIPULATION
 ###############################
@@ -1466,6 +1466,7 @@ mdb.models['Model-1'].ModelChange(name='WireDeletion', createStepName='Launch',
 # Payload Contact Deletion step
 mdb.models['Model-1'].interactions['BackPayloadContact'].deactivate('Launch')
 mdb.models['Model-1'].interactions['FrontPayloadContact'].deactivate('Launch')
+
 
 ##################################  
 #Create Loads
