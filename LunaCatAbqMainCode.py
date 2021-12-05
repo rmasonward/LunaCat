@@ -1260,6 +1260,39 @@ d12 = a.instances['ARM-1'].datums
 a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
 
 ###############################
+#PAYLOAD CONTACT###############
+###############################
+#Back of the spoon contact
+a = mdb.models['Model-1'].rootAssembly
+mdb.models['Model-1'].ContactProperty('PayloadContactProperty')
+mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].TangentialBehavior(
+    formulation=ROUGH)
+#: The interaction property "PayloadContactProperty" has been created.
+a = mdb.models['Model-1'].rootAssembly
+region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
+a = mdb.models['Model-1'].rootAssembly
+region2=a.instances['Payload-1'].sets['BACK_PAYLOAD']
+mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayloadContact', 
+    createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
+    thickness=ON, interactionProperty='PayloadContactProperty', 
+    adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
+    clearanceRegion=None)
+#: The interaction "BackPayloadContact" has been created.
+
+#front of the spoon contact
+a = mdb.models['Model-1'].rootAssembly
+region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
+a = mdb.models['Model-1'].rootAssembly
+region2=a.instances['Payload-1'].sets['FRONT_PAYLOAD']
+mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayloadContact', 
+    createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
+    thickness=ON, interactionProperty='PayloadContactProperty', 
+    adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
+    clearanceRegion=None)
+#: The interaction "FrontPayloadContact" has been created.
+
+
+###############################
 #WIRE CREATION AND MANIPULATION
 ###############################
 s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
@@ -1423,6 +1456,10 @@ mdb.models['Model-1'].ModelChange(name='WireDeletion', createStepName='Launch',
     region=region, activeInStep=False, includeStrain=False)
 #: The interaction "Int-2" has been created.
 # mdb.models['Model-1'].interactions['Int-1'].reset('Launch')
+
+# Payload Contact Deletion step
+mdb.models['Model-1'].interactions['BackPayloadContact'].deactivate('Launch')
+mdb.models['Model-1'].interactions['FrontPayloadContact'].deactivate('Launch')
 
 ##################################  
 #Create Loads
