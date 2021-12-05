@@ -1270,9 +1270,12 @@ a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SP
 ###############################
 #Back of the spoon contact
 a = mdb.models['Model-1'].rootAssembly
-mdb.models['Model-1'].ContactProperty('PayloadContactProperty')
-mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].TangentialBehavior(
+a.regenerate()
+mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].tangentialBehavior.setValues(
     formulation=ROUGH)
+mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].NormalBehavior(
+    pressureOverclosure=HARD, allowSeparation=ON, 
+    constraintEnforcementMethod=DEFAULT)
 #: The interaction property "PayloadContactProperty" has been created.
 a = mdb.models['Model-1'].rootAssembly
 region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
@@ -1472,7 +1475,9 @@ mdb.models['Model-1'].interactions['FrontPayloadContact'].deactivate('Launch')
 #Create Loads
 ##################################  
 print('Defining Loads')
-
+#creating gravity
+mdb.models['Model-1'].Gravity(name='Load-1', createStepName='Loading', 
+    comp2=-1.62, distributionType=UNIFORM, field='')
     
     
     
@@ -1590,3 +1595,4 @@ p.generateMesh()
     # ##END LOOP (i.e., end indentation)
 
 print('DONE!!')
+
