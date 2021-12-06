@@ -1439,6 +1439,44 @@ pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, xOffset/2), ), ((xOf
 d = p.datums
 p.PartitionCellByDatumPlane(datumPlane=d[21], cells=pickedCells)
 
+#Creating Surfaces to be used for contact
+s = p.faces
+side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontPayload')
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='BackPayload')
+s = p.faces
+side1Faces = s.findAt(((xOffset/2, 0.0, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontBottomPayload')
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='BackBottomPayload')
+s = p.faces
+side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH - xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky1')
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH, xOffset/2,  PAY_WIDTH - xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='BackPayloadSticky1')
+s = p.faces
+side1Faces = s.findAt(((xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky1')
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky1')
+s = p.faces
+side1Faces = s.findAt(((0.0, xOffset/2, xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky2')
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='BackPayloadSticky2')
+s = p.faces
+side1Faces = s.findAt(((xOffset/2, 0.0, xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky2')
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, xOffset/2), ))
+p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky2')
+
 
 #Payload contact
 a = mdb.models['Model-1'].rootAssembly
@@ -1677,56 +1715,41 @@ p.generateMesh()
 
 
 
-# ####################################
-# ## Creation/Execution of the Job ###
-# ####################################
-print 'Creating/Running Job'
+    # ####################################
+    # ## Creation/Execution of the Job ###
+    # ####################################
+    # print 'Creating/Running Job'
 
-ModelName='Model-1'
+    # ModelName='Model-1'
 
-# mdb.Job(name=ModelName, model=ModelName, description='', type=ANALYSIS, 
-    # atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90, 
-    # memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True, 
-    # explicitPrecision=SINGLE, nodalOutputPrecision=SINGLE, echoPrint=OFF, 
-    # modelPrint=OFF, contactPrint=OFF, historyPrint=OFF, userSubroutine='', 
-    # scratch='', multiprocessingMode=DEFAULT, numCpus=1, numGPUs=0)
+    # mdb.Job(name=ModelName, model=ModelName, description='', type=ANALYSIS, 
+        # atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90, 
+        # memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True, 
+        # explicitPrecision=SINGLE, nodalOutputPrecision=SINGLE, echoPrint=OFF, 
+        # modelPrint=OFF, contactPrint=OFF, historyPrint=OFF, userSubroutine='', 
+        # scratch='', multiprocessingMode=DEFAULT, numCpus=1, numGPUs=0)
 
-# job=mdb.jobs[ModelName]
+    # job=mdb.jobs[ModelName]
 
-# delete lock file, which for some reason tends to hang around, if it exists
-# if os.access('%s.lck'%ModelName,os.F_OK):
-    # os.remove('%s.lck'%ModelName)
-    
-# Run the job, then process the results.        
-# job.submit()
-# job.waitForCompletion()
-# print 'Completed job'
+    # delete lock file, which for some reason tends to hang around, if it exists
+    # if os.access('%s.lck'%ModelName,os.F_OK):
+        # os.remove('%s.lck'%ModelName)
+        
+    # Run the job, then process the results.        
+    # job.submit()
+    # job.waitForCompletion()
+    # print 'Completed job'
 
-
-
-
-
-# print sizes
-# ##END LOOP (i.e., end indentation)
+    # tipDisp = getResults(ModelName)
+    # DataFile = open('PostData.txt','a')
+    # DataFile.write('%10f %10f\n' % (sizes,tipDisp))
+    # DataFile.close()	
 
 
+    # Calculations (if needed)
 
-##################################      
-#Output Variables
-################################## 
 
-# Mass
-prop = mdb.models[ModelName].rootAssembly.getMassProperties()
-mass = prop['mass']
-
-# Payload exit velocity
-
-# Payload exit angle
-
-# Max Mises stress in structure
-maxMises = getResults(ModelName)
-DataFile = open('PostData.txt','a')
-DataFile.write('%10f %10f\n' % (sizes,maxMises))
-DataFile.close()	
+    # print sizes
+    # ##END LOOP (i.e., end indentation)
 
 print('DONE!!')
