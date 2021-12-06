@@ -31,7 +31,7 @@ import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
 from math import atan2, atan, sin, cos, tan, sqrt
-#from Post_P_Script import getResults
+from Post_P_Script_Velo import getResults
 
 
 ######################################
@@ -1253,19 +1253,19 @@ ropeDistance = sqrt((pullPointCoords[0]-spoonCoords[0])**2 + (pullPointCoords[1]
 print(ropeDistance)
 #END CHANGES RMW 12/3
 
-## Adding in payload instance 
-a = mdb.models['Model-1'].rootAssembly
-p = mdb.models['Model-1'].parts['Payload']
-a.Instance(name='Payload-1', part=p, dependent=ON)
-d11 = a.instances['Payload-1'].datums
-d12 = a.instances['ARM-1'].datums
-a.FaceToFace(movablePlane=d11[5], fixedPlane=d12[13], flip=OFF, clearance=0.0)
-d11 = a.instances['Payload-1'].datums
-d12 = a.instances['ARM-1'].datums
-a.FaceToFace(movablePlane=d11[7], fixedPlane=d12[19], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
-d11 = a.instances['Payload-1'].datums
-d12 = a.instances['ARM-1'].datums
-a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
+# ## Adding in payload instance 
+# a = mdb.models['Model-1'].rootAssembly
+# p = mdb.models['Model-1'].parts['Payload']
+# a.Instance(name='Payload-1', part=p, dependent=ON)
+# d11 = a.instances['Payload-1'].datums
+# d12 = a.instances['ARM-1'].datums
+# a.FaceToFace(movablePlane=d11[5], fixedPlane=d12[13], flip=OFF, clearance=0.0)
+# d11 = a.instances['Payload-1'].datums
+# d12 = a.instances['ARM-1'].datums
+# a.FaceToFace(movablePlane=d11[7], fixedPlane=d12[19], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
+# d11 = a.instances['Payload-1'].datums
+# d12 = a.instances['ARM-1'].datums
+# a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
 
 ###############################
 #PAYLOAD CONTACT###############
@@ -1372,158 +1372,158 @@ a.Set(vertices=verts1, name='WireEnd_Clevis')
 a1.translate(instanceList=('WIRE_BOI-1', ), vector=(0.0, 0.0, spoonCoords[2]))
 
 
-#################################
-# Payload Stuff #################
-#################################
-#Partitioning Payload
-p = mdb.models['Model-1'].parts['Payload']
-c = p.cells
-pickedCells = c.findAt(((0, 0, 0), ))
-e, v, d = p.edges, p.vertices, p.datums
-p.PartitionCellByPlanePointNormal(normal=e.findAt(coordinates=(PAY_LENGTH/2, PAY_HEIGHT, 
-    PAY_WIDTH)), cells=pickedCells, point=p.InterestingPoint(edge=e.findAt(
-    coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
-    PAY_WIDTH)), rule=MIDDLE))
+# #################################
+# # Payload Stuff #################
+# #################################
+# #Partitioning Payload
+# p = mdb.models['Model-1'].parts['Payload']
+# c = p.cells
+# pickedCells = c.findAt(((0, 0, 0), ))
+# e, v, d = p.edges, p.vertices, p.datums
+# p.PartitionCellByPlanePointNormal(normal=e.findAt(coordinates=(PAY_LENGTH/2, PAY_HEIGHT, 
+    # PAY_WIDTH)), cells=pickedCells, point=p.InterestingPoint(edge=e.findAt(
+    # coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
+    # PAY_WIDTH)), rule=MIDDLE))
     
 
 
-xOffset = SPOON_FLANGE_HEIGHT/2
-p = mdb.models['Model-1'].parts['Payload']
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=xOffset)
-p = mdb.models['Model-1'].parts['Payload']
-p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(PAY_LENGTH-xOffset))
-p = mdb.models['Model-1'].parts['Payload']
-p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=xOffset)
-p = mdb.models['Model-1'].parts['Payload']
-c = p.cells
-pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
-d2 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
+# xOffset = SPOON_FLANGE_HEIGHT/2
+# p = mdb.models['Model-1'].parts['Payload']
+# p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=xOffset)
+# p = mdb.models['Model-1'].parts['Payload']
+# p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(PAY_LENGTH-xOffset))
+# p = mdb.models['Model-1'].parts['Payload']
+# p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=xOffset)
+# p = mdb.models['Model-1'].parts['Payload']
+# c = p.cells
+# pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+# d2 = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
 
-p = mdb.models['Model-1'].parts['Payload']
-c = p.cells
-pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
-c = p.cells
-pickedCells = c.findAt(((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-d2 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d2[9], cells=pickedCells)
+# p = mdb.models['Model-1'].parts['Payload']
+# c = p.cells
+# pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+# d = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
+# c = p.cells
+# pickedCells = c.findAt(((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+# d2 = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d2[9], cells=pickedCells)
 
-p = mdb.models['Model-1'].parts['Payload']
-p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2-xOffset))
-p = mdb.models['Model-1'].parts['Payload']
-p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2+xOffset))
+# p = mdb.models['Model-1'].parts['Payload']
+# p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2-xOffset))
+# p = mdb.models['Model-1'].parts['Payload']
+# p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2+xOffset))
 
-c = p.cells
-pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
-p = mdb.models['Model-1'].parts['Payload']
-c = p.cells
-pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-d2 = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d2[16], cells=pickedCells)
+# c = p.cells
+# pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+# d = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
+# p = mdb.models['Model-1'].parts['Payload']
+# c = p.cells
+# pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+# d2 = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d2[16], cells=pickedCells)
 
-p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=PAY_WIDTH-xOffset)
+# p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=PAY_WIDTH-xOffset)
 
-p = mdb.models['Model-1'].parts['Payload']
-c = p.cells
-pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH - xOffset/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH- xOffset/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[19], cells=pickedCells)
+# p = mdb.models['Model-1'].parts['Payload']
+# c = p.cells
+# pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH - xOffset/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH- xOffset/2), ))
+# d = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d[19], cells=pickedCells)
 
-p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=xOffset)
-c = p.cells
-pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, xOffset/2), ), ((xOffset/2, xOffset/2, xOffset/2), ))
-d = p.datums
-p.PartitionCellByDatumPlane(datumPlane=d[21], cells=pickedCells)
+# p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=xOffset)
+# c = p.cells
+# pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, xOffset/2), ), ((xOffset/2, xOffset/2, xOffset/2), ))
+# d = p.datums
+# p.PartitionCellByDatumPlane(datumPlane=d[21], cells=pickedCells)
 
-#Creating Surfaces to be used for contact
-s = p.faces
-side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontPayload')
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='BackPayload')
-s = p.faces
-side1Faces = s.findAt(((xOffset/2, 0.0, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontBottomPayload')
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='BackBottomPayload')
-s = p.faces
-side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH - xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky1')
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH, xOffset/2,  PAY_WIDTH - xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='BackPayloadSticky1')
-s = p.faces
-side1Faces = s.findAt(((xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky1')
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky1')
-s = p.faces
-side1Faces = s.findAt(((0.0, xOffset/2, xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky2')
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='BackPayloadSticky2')
-s = p.faces
-side1Faces = s.findAt(((xOffset/2, 0.0, xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky2')
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, xOffset/2), ))
-p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky2')
+# #Creating Surfaces to be used for contact
+# s = p.faces
+# side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH/2), ))
+# p.Surface(side1Faces=side1Faces, name='FrontPayload')
+# s = p.faces
+# side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, PAY_WIDTH/2), ))
+# p.Surface(side1Faces=side1Faces, name='BackPayload')
+# s = p.faces
+# side1Faces = s.findAt(((xOffset/2, 0.0, PAY_WIDTH/2), ))
+# p.Surface(side1Faces=side1Faces, name='FrontBottomPayload')
+# s = p.faces
+# side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, PAY_WIDTH/2), ))
+# p.Surface(side1Faces=side1Faces, name='BackBottomPayload')
+# s = p.faces
+# side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH - xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky1')
+# s = p.faces
+# side1Faces = s.findAt(((PAY_LENGTH, xOffset/2,  PAY_WIDTH - xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='BackPayloadSticky1')
+# s = p.faces
+# side1Faces = s.findAt(((xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky1')
+# s = p.faces
+# side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky1')
+# s = p.faces
+# side1Faces = s.findAt(((0.0, xOffset/2, xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky2')
+# s = p.faces
+# side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='BackPayloadSticky2')
+# s = p.faces
+# side1Faces = s.findAt(((xOffset/2, 0.0, xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky2')
+# s = p.faces
+# side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, xOffset/2), ))
+# p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky2')
 
 
-#Payload contact
-a = mdb.models['Model-1'].rootAssembly
-a.regenerate()
-mdb.models['Model-1'].ContactProperty('PayContactProperty')
-mdb.models['Model-1'].interactionProperties['PayContactProperty'].TangentialBehavior(
-    formulation=FRICTIONLESS)
-mdb.models['Model-1'].interactionProperties['PayContactProperty'].NormalBehavior(
-    pressureOverclosure=HARD, allowSeparation=ON, 
-    constraintEnforcementMethod=DEFAULT)
-#: The interaction property "PayContactProperty" has been created.
-a = mdb.models['Model-1'].rootAssembly
-region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Payload-1'].surfaces['FrontPayload']
-mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayContact', 
-    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-#: The interaction "FrontPayContact" has been created.
+# #Payload contact
+# a = mdb.models['Model-1'].rootAssembly
+# a.regenerate()
+# mdb.models['Model-1'].ContactProperty('PayContactProperty')
+# mdb.models['Model-1'].interactionProperties['PayContactProperty'].TangentialBehavior(
+    # formulation=FRICTIONLESS)
+# mdb.models['Model-1'].interactionProperties['PayContactProperty'].NormalBehavior(
+    # pressureOverclosure=HARD, allowSeparation=ON, 
+    # constraintEnforcementMethod=DEFAULT)
+# #: The interaction property "PayContactProperty" has been created.
+# a = mdb.models['Model-1'].rootAssembly
+# region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
+# a = mdb.models['Model-1'].rootAssembly
+# region2=a.instances['Payload-1'].surfaces['FrontPayload']
+# mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayContact', 
+    # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+# #: The interaction "FrontPayContact" has been created.
 
-region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Payload-1'].surfaces['FrontBottomPayload']
-mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontBottomPayContact', 
-    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-#: The interaction "FrontBottomPayContact" has been created.
+# region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
+# a = mdb.models['Model-1'].rootAssembly
+# region2=a.instances['Payload-1'].surfaces['FrontBottomPayload']
+# mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontBottomPayContact', 
+    # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+# #: The interaction "FrontBottomPayContact" has been created.
 
-region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Payload-1'].surfaces['BackPayload']
-mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayContact', 
-    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-#: The interaction "BackPayContact" has been created.
+# region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
+# a = mdb.models['Model-1'].rootAssembly
+# region2=a.instances['Payload-1'].surfaces['BackPayload']
+# mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayContact', 
+    # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+# #: The interaction "BackPayContact" has been created.
 
-region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Payload-1'].surfaces['BackBottomPayload']
-mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackBottomPayContact', 
-    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-#: The interaction "BackBottomPayContact" has been created.
+# region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
+# a = mdb.models['Model-1'].rootAssembly
+# region2=a.instances['Payload-1'].surfaces['BackBottomPayload']
+# mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackBottomPayContact', 
+    # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+# #: The interaction "BackBottomPayContact" has been created.
 
 
 
@@ -1551,7 +1551,7 @@ mdb.models['Model-1'].ImplicitDynamicsStep(name='Launch', previous='Loading',
 mdb.models['Model-1'].steps['Launch'].setValues(maxNumInc=500)
 # Defining FollowThru step
 mdb.models['Model-1'].ImplicitDynamicsStep(name='FollowThru', previous='Launch', 
-    timePeriod=0.25, application=TRANSIENT_FIDELITY, initialInc=0.05, 
+    timePeriod=0.1, application=TRANSIENT_FIDELITY, initialInc=0.015, 
     minInc=2e-05, nohaf=OFF, initialConditions=ON)
 mdb.models['Model-1'].steps['FollowThru'].setValues(maxNumInc=150) ####JOB BROKE WITH ONLY 100 INCS LAST TIME   
    
