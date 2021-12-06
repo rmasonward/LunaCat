@@ -1152,6 +1152,8 @@ p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
 p = mdb.models['Model-1'].parts['Payload']
 p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=0.0)
 
+
+
 ##################################  
 #Assemble Parts
 ##################################  
@@ -1269,36 +1271,37 @@ a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SP
 #PAYLOAD CONTACT###############
 ###############################
 #Back of the spoon contact
-a = mdb.models['Model-1'].rootAssembly
-a.regenerate()
-mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].tangentialBehavior.setValues(
-    formulation=ROUGH)
-mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].NormalBehavior(
-    pressureOverclosure=HARD, allowSeparation=ON, 
-    constraintEnforcementMethod=DEFAULT)
-#: The interaction property "PayloadContactProperty" has been created.
-a = mdb.models['Model-1'].rootAssembly
-region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Payload-1'].sets['BACK_PAYLOAD']
-mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayloadContact', 
-    createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
-    thickness=ON, interactionProperty='PayloadContactProperty', 
-    adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
-    clearanceRegion=None)
-#: The interaction "BackPayloadContact" has been created.
+# a = mdb.models['Model-1'].rootAssembly
+# a.regenerate()
 
-#front of the spoon contact
-a = mdb.models['Model-1'].rootAssembly
-region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Payload-1'].sets['FRONT_PAYLOAD']
-mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayloadContact', 
-    createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
-    thickness=ON, interactionProperty='PayloadContactProperty', 
-    adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
-    clearanceRegion=None)
-#: The interaction "FrontPayloadContact" has been created.
+# mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].NormalBehavior(
+    # pressureOverclosure=HARD, allowSeparation=ON, 
+    # constraintEnforcementMethod=DEFAULT)
+# # mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].tangentialBehavior.setValues(
+    # # formulation=ROUGH)    
+# #: The interaction property "PayloadContactProperty" has been created.
+# a = mdb.models['Model-1'].rootAssembly
+# region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
+# a = mdb.models['Model-1'].rootAssembly
+# region2=a.instances['Payload-1'].sets['BACK_PAYLOAD']
+# mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayloadContact', 
+    # createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
+    # thickness=ON, interactionProperty='PayloadContactProperty', 
+    # adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
+    # clearanceRegion=None)
+# #: The interaction "BackPayloadContact" has been created.
+
+# #front of the spoon contact
+# a = mdb.models['Model-1'].rootAssembly
+# region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
+# a = mdb.models['Model-1'].rootAssembly
+# region2=a.instances['Payload-1'].sets['FRONT_PAYLOAD']
+# mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayloadContact', 
+    # createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
+    # thickness=ON, interactionProperty='PayloadContactProperty', 
+    # adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
+    # clearanceRegion=None)
+# #: The interaction "FrontPayloadContact" has been created.
 
 
 ###############################
@@ -1369,6 +1372,89 @@ a.Set(vertices=verts1, name='WireEnd_Clevis')
 a1.translate(instanceList=('WIRE_BOI-1', ), vector=(0.0, 0.0, spoonCoords[2]))
 
 
+#################################
+# Payload Stuff #################
+#################################
+#Partitioning Payload
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+pickedCells = c.findAt(((0, 0, 0), ))
+e, v, d = p.edges, p.vertices, p.datums
+p.PartitionCellByPlanePointNormal(normal=e.findAt(coordinates=(PAY_LENGTH/2, PAY_HEIGHT, 
+    PAY_WIDTH)), cells=pickedCells, point=p.InterestingPoint(edge=e.findAt(
+    coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
+    PAY_WIDTH)), rule=MIDDLE))
+    
+#Creating Surfaces to be used for contact
+s = p.faces
+side1Faces = s.findAt(((0.0, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontPayload')
+#: The surface 'FrontPayload' has been created (1 face).
+
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='BackPayload')
+#: The surface 'BackPayload' has been created (1 face).
+
+s = p.faces
+side1Faces = s.findAt(((PAY_LENGTH/4, 0.0, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='FrontBottomPayload')
+#: The surface 'FrontBottomPayload' has been created (1 face).
+
+s = p.faces
+side1Faces = s.findAt(((3*PAY_LENGTH/4, 0.0, PAY_WIDTH/2), ))
+p.Surface(side1Faces=side1Faces, name='BackBottomPayload')
+#: The surface 'BackBottomPayload' has been created (1 face).  
+
+#Payload contact
+a = mdb.models['Model-1'].rootAssembly
+a.regenerate()
+mdb.models['Model-1'].ContactProperty('PayContactProperty')
+mdb.models['Model-1'].interactionProperties['PayContactProperty'].TangentialBehavior(
+    formulation=FRICTIONLESS)
+mdb.models['Model-1'].interactionProperties['PayContactProperty'].NormalBehavior(
+    pressureOverclosure=HARD, allowSeparation=ON, 
+    constraintEnforcementMethod=DEFAULT)
+#: The interaction property "PayContactProperty" has been created.
+a = mdb.models['Model-1'].rootAssembly
+region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
+a = mdb.models['Model-1'].rootAssembly
+region2=a.instances['Payload-1'].surfaces['FrontPayload']
+mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayContact', 
+    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+#: The interaction "FrontPayContact" has been created.
+
+region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
+a = mdb.models['Model-1'].rootAssembly
+region2=a.instances['Payload-1'].surfaces['FrontBottomPayload']
+mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontBottomPayContact', 
+    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+#: The interaction "FrontBottomPayContact" has been created.
+
+region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
+a = mdb.models['Model-1'].rootAssembly
+region2=a.instances['Payload-1'].surfaces['BackPayload']
+mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayContact', 
+    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+#: The interaction "BackPayContact" has been created.
+
+region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
+a = mdb.models['Model-1'].rootAssembly
+region2=a.instances['Payload-1'].surfaces['BackBottomPayload']
+mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackBottomPayContact', 
+    createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+    thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
+    initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
+#: The interaction "BackBottomPayContact" has been created.
+
+
+
 ##################################  
 #Define Steps
 ##################################  
@@ -1384,10 +1470,13 @@ mdb.models['Model-1'].Temperature(name='WireTemp', createStepName='Initial',
 mdb.models['Model-1'].ImplicitDynamicsStep(name='Loading', previous='Initial', 
     maxNumInc=30, application=QUASI_STATIC, initialInc=0.1, nohaf=OFF, 
     amplitude=RAMP, alpha=DEFAULT, initialConditions=OFF, nlgeom=ON)
+mdb.models['Model-1'].steps['Loading'].setValues(timePeriod=5.0, maxNumInc=500, 
+    initialInc=0.5, minInc=5e-05)
 # Defining Launch step
 mdb.models['Model-1'].ImplicitDynamicsStep(name='Launch', previous='Loading', 
     timePeriod=0.01, application=TRANSIENT_FIDELITY, initialInc=0.01, 
     minInc=2e-07, nohaf=OFF, initialConditions=ON)
+mdb.models['Model-1'].steps['Launch'].setValues(maxNumInc=500)
 # Defining FollowThru step
 mdb.models['Model-1'].ImplicitDynamicsStep(name='FollowThru', previous='Launch', 
     timePeriod=0.25, application=TRANSIENT_FIDELITY, initialInc=0.05, 
@@ -1466,9 +1555,6 @@ mdb.models['Model-1'].ModelChange(name='WireDeletion', createStepName='Launch',
 #: The interaction "Int-2" has been created.
 # mdb.models['Model-1'].interactions['Int-1'].reset('Launch')
 
-# Payload Contact Deletion step
-mdb.models['Model-1'].interactions['BackPayloadContact'].deactivate('Launch')
-mdb.models['Model-1'].interactions['FrontPayloadContact'].deactivate('Launch')
 
 
 ##################################  
