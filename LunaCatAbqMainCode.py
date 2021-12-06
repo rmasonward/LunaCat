@@ -1393,7 +1393,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     # # Payload Stuff #################
     # #################################
     #Partitioning Payload
-    p = mdb.models['Model-1'].parts['Payload']
+        p = mdb.models['Model-1'].parts['Payload']
     c = p.cells
     pickedCells = c.findAt(((0, 0, 0), ))
     e, v, d = p.edges, p.vertices, p.datums
@@ -1402,11 +1402,14 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
         coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
         PAY_WIDTH)), rule=MIDDLE))
         
-
-
     xOffset = SPOON_FLANGE_HEIGHT/2
     p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=xOffset)
+    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2))
+    c = p.cells
+    pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+    d = p.datums
+    p.PartitionCellByDatumPlane(datumPlane=d[9], cells=pickedCells)
+
     p = mdb.models['Model-1'].parts['Payload']
     p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(PAY_LENGTH-xOffset))
     p = mdb.models['Model-1'].parts['Payload']
@@ -1415,94 +1418,15 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     c = p.cells
     pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
     d2 = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
-
-    p = mdb.models['Model-1'].parts['Payload']
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-    d = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
-    c = p.cells
-    pickedCells = c.findAt(((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-    d2 = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d2[9], cells=pickedCells)
-
-    p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2-xOffset))
-    p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2+xOffset))
-
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-    d = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
-    p = mdb.models['Model-1'].parts['Payload']
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
-    d2 = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d2[16], cells=pickedCells)
-
-    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=PAY_WIDTH-xOffset)
-
-    p = mdb.models['Model-1'].parts['Payload']
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH - xOffset/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH- xOffset/2), ))
-    d = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d[19], cells=pickedCells)
-
-    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=xOffset)
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, xOffset/2), ), ((xOffset/2, xOffset/2, xOffset/2), ))
-    d = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d[21], cells=pickedCells)
-
-    #Creating Surfaces to be used for contact
-    s = p.faces
-    side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH/2), ))
-    p.Surface(side1Faces=side1Faces, name='FrontPayload')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, PAY_WIDTH/2), ))
-    p.Surface(side1Faces=side1Faces, name='BackPayload')
-    s = p.faces
-    side1Faces = s.findAt(((xOffset/2, 0.0, PAY_WIDTH/2), ))
-    p.Surface(side1Faces=side1Faces, name='FrontBottomPayload')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, PAY_WIDTH/2), ))
-    p.Surface(side1Faces=side1Faces, name='BackBottomPayload')
-    s = p.faces
-    side1Faces = s.findAt(((0.0, xOffset/2, PAY_WIDTH - xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky1')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH, xOffset/2,  PAY_WIDTH - xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='BackPayloadSticky1')
-    s = p.faces
-    side1Faces = s.findAt(((xOffset/2, 0.0,  PAY_WIDTH - xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky1')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0,    PAY_WIDTH - xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky1')
-    s = p.faces
-    side1Faces = s.findAt(((0.0, xOffset/2, xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='FrontPayloadSticky2')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH, xOffset/2, xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='BackPayloadSticky2')
-    s = p.faces
-    side1Faces = s.findAt(((xOffset/2, 0.0, xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='FrontBottomPayloadSticky2')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH - xOffset/2, 0.0, xOffset/2), ))
-    p.Surface(side1Faces=side1Faces, name='BackBottomPayloadSticky2')
-    
-    p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=PAY_WIDTH/2)
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH/4, 0.0, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, 0.0, PAY_WIDTH/2), ))
-    d = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d[35], cells=pickedCells)
+    #p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
     v = p.vertices
     verts = v.findAt(((PAY_LENGTH/2, 0.0, PAY_WIDTH/2), ))
     p.Set(vertices=verts, name='PAY_PULL_POINT')
+    s = p.faces
+    side1Faces = s.findAt(((PAY_LENGTH/2+xOffset, 0.0, PAY_WIDTH/2+xOffset), ), ((PAY_LENGTH/2-xOffset, 0.0, PAY_WIDTH/2+xOffset), ), ((PAY_LENGTH/2+xOffset, 0.0, PAY_WIDTH/2-xOffset), ), ((PAY_LENGTH/2-xOffset, 0.0, PAY_WIDTH/2-xOffset), ))
+    p.Surface(side1Faces=side1Faces, name='PAY_BOTTOM_SURF')
+    
+    
     
     #Payload contact
     # a = mdb.models['Model-1'].rootAssembly
