@@ -1643,42 +1643,56 @@ p.generateMesh()
 
 
 
-    # ####################################
-    # ## Creation/Execution of the Job ###
-    # ####################################
-    # print 'Creating/Running Job'
+# ####################################
+# ## Creation/Execution of the Job ###
+# ####################################
+print 'Creating/Running Job'
 
-    # ModelName='Model-1'
+ModelName='Model-1'
 
-    # mdb.Job(name=ModelName, model=ModelName, description='', type=ANALYSIS, 
-        # atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90, 
-        # memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True, 
-        # explicitPrecision=SINGLE, nodalOutputPrecision=SINGLE, echoPrint=OFF, 
-        # modelPrint=OFF, contactPrint=OFF, historyPrint=OFF, userSubroutine='', 
-        # scratch='', multiprocessingMode=DEFAULT, numCpus=1, numGPUs=0)
+# mdb.Job(name=ModelName, model=ModelName, description='', type=ANALYSIS, 
+    # atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90, 
+    # memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True, 
+    # explicitPrecision=SINGLE, nodalOutputPrecision=SINGLE, echoPrint=OFF, 
+    # modelPrint=OFF, contactPrint=OFF, historyPrint=OFF, userSubroutine='', 
+    # scratch='', multiprocessingMode=DEFAULT, numCpus=1, numGPUs=0)
 
-    # job=mdb.jobs[ModelName]
+# job=mdb.jobs[ModelName]
 
-    # delete lock file, which for some reason tends to hang around, if it exists
-    # if os.access('%s.lck'%ModelName,os.F_OK):
-        # os.remove('%s.lck'%ModelName)
-        
-    # Run the job, then process the results.        
-    # job.submit()
-    # job.waitForCompletion()
-    # print 'Completed job'
-
-    # tipDisp = getResults(ModelName)
-    # DataFile = open('PostData.txt','a')
-    # DataFile.write('%10f %10f\n' % (sizes,tipDisp))
-    # DataFile.close()	
+# delete lock file, which for some reason tends to hang around, if it exists
+# if os.access('%s.lck'%ModelName,os.F_OK):
+    # os.remove('%s.lck'%ModelName)
+    
+# Run the job, then process the results.        
+# job.submit()
+# job.waitForCompletion()
+# print 'Completed job'
 
 
-    # Calculations (if needed)
 
 
-    # print sizes
-    # ##END LOOP (i.e., end indentation)
+
+# print sizes
+# ##END LOOP (i.e., end indentation)
+
+
+
+##################################      
+#Output Variables
+################################## 
+
+# Mass
+prop = mdb.models[ModelName].rootAssembly.getMassProperties()
+mass = prop['mass']
+
+# Payload exit velocity
+
+# Payload exit angle
+
+# Max Mises stress in structure
+maxMises = getResults(ModelName)
+DataFile = open('PostData.txt','a')
+DataFile.write('%10f %10f\n' % (sizes,maxMises))
+DataFile.close()	
 
 print('DONE!!')
-
