@@ -1385,26 +1385,60 @@ p.PartitionCellByPlanePointNormal(normal=e.findAt(coordinates=(PAY_LENGTH/2, PAY
     coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
     PAY_WIDTH)), rule=MIDDLE))
     
-#Creating Surfaces to be used for contact
-s = p.faces
-side1Faces = s.findAt(((0.0, PAY_HEIGHT/2, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontPayload')
-#: The surface 'FrontPayload' has been created (1 face).
 
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH, PAY_HEIGHT/2, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='BackPayload')
-#: The surface 'BackPayload' has been created (1 face).
 
-s = p.faces
-side1Faces = s.findAt(((PAY_LENGTH/4, 0.0, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='FrontBottomPayload')
-#: The surface 'FrontBottomPayload' has been created (1 face).
+xOffset = SPOON_FLANGE_HEIGHT/2
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=xOffset)
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(PAY_LENGTH-xOffset))
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=xOffset)
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
 
-s = p.faces
-side1Faces = s.findAt(((3*PAY_LENGTH/4, 0.0, PAY_WIDTH/2), ))
-p.Surface(side1Faces=side1Faces, name='BackBottomPayload')
-#: The surface 'BackBottomPayload' has been created (1 face).  
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+d = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d[10], cells=pickedCells)
+c = p.cells
+pickedCells = c.findAt(((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[9], cells=pickedCells)
+
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2-xOffset))
+p = mdb.models['Model-1'].parts['Payload']
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2+xOffset))
+
+c = p.cells
+pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+d = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d[15], cells=pickedCells)
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH/2), ))
+d2 = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d2[16], cells=pickedCells)
+
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=PAY_WIDTH-xOffset)
+
+p = mdb.models['Model-1'].parts['Payload']
+c = p.cells
+pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, PAY_WIDTH - xOffset/2), ), ((xOffset/2, xOffset/2, PAY_WIDTH- xOffset/2), ))
+d = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d[19], cells=pickedCells)
+
+p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=xOffset)
+c = p.cells
+pickedCells = c.findAt(((PAY_LENGTH - xOffset/2, xOffset/2, xOffset/2), ), ((xOffset/2, xOffset/2, xOffset/2), ))
+d = p.datums
+p.PartitionCellByDatumPlane(datumPlane=d[21], cells=pickedCells)
+
 
 #Payload contact
 a = mdb.models['Model-1'].rootAssembly
