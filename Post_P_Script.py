@@ -6,21 +6,77 @@ from abaqus import *
 from abaqusConstants import *
 import visualization
 from viewerModules import *
+import math
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def getResults(ModelName):
 
     """
     This ODB reading script does the following:
-    -Retrieves the displacement at TIPNODE
-    -Scans for max. Mises stress in a part (if set exists)
+    -Scans to see when the there is no more contact between the payload and arm
+    -Pulls the velocity of the payload at this point
     """
     
     # Open the output database.
     print 'Made it in'
     odbName = ModelName+'.odb'
-    odb = visualization.openOdb(odbName)    
-   
+    print odbName
+    odb = visualization.openOdb(odbName)
+    # lastFrame = odb.steps['Step-1'].frames[-1]
+    launchFrames = odb.steps['FollowThru'].frames
+    print 'odb open'
+ 
+
+    # Selecting the node(s) to be queried
+    # pTip = odb.rootAssembly.instances['Payload-1'].nodeSets['SPOON_PULL_POINT']
+    payPoint = odb.rootAssembly.instances['PAYLOAD-1'].nodeSets['PAY_PULL_POINT']
+    
+    veloMagMax = 0
+    veloAngle = 0
+    
+    print("Found payPoint")
+    
+        #looking for when there is no contact and taking velocity at that point
+    for frame in launchFrames:
+        framecontact = frame.fieldOutputs['CPRESS'].getSubset(region=payPoint).values[0].data
+        #want V1, V2
+        if framecontact < 0.0001:
+            frameVelo = frame.fieldOutputs['V'].getSubset(region=payPoint).values[0].data
+
+            veloX = frameVelo[0]
+            veloY = frameVelo[1]
+            
+            frameVeloMag = math.sqrt(veloX**2 + veloY**2)
+            if frameVeloMag > veloMagMax:
+                veloMagMax = frameVeloMag
+                veloAngle = math.atan2(-veloX,veloY)*180/math.pi
+                
+            break
+        
+    
+    print("Found the maximum velocity and angle")   
+
+    #####################################
+    #Extract Eigen Value
+    ####################################
+    
+    eigenVal1 = 0.0
+    lastFrameEig = odb.steps['BuckleCheck'].frames[-1]
+    print lastFrameEig.description
+    ##The following string is from the description of the frame; contains the eigenvalue
+    descString=lastFrameEig.description
+    print lastFrameEig.mode
+    ##Now we split the string at the = sign
+    pattern2 = re.compile('\s*=\s*')
+    print pattern2.split(descString)
+    print pattern2.split(descString)[1]
+    ##Convert the second string (index=1) to floating point number
+    eigenVal1=float(pattern2.split(descString)[1])
+
+    #####################################
+    #Extract Max Mises Value
+    ####################################
+    
     print 'Scanning the PART for maximum VM STRESS'
     elsetName='ALL_PART'
     elset = elemset = None
@@ -41,7 +97,7 @@ def getResults(ModelName):
            odb.close()
            exit(0)
            
-    """ Initialize maximum values """
+    #init values
     maxMises = -0.1
     maxVMElem = 0
     maxStep = "_None_"
@@ -71,10 +127,9 @@ def getResults(ModelName):
     else:
        print 'Stress output is not available in' \
              'the output database : %s\n' %(odb.name)     
-
+    
+    #Close
+    
     odb.close()
-
-    return maxMises
-
-
-   
+    
+    return veloMagMax,veloAngle,eigenVal1,maxMises

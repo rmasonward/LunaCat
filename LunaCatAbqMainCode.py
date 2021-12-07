@@ -1655,6 +1655,20 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p = mdb.models['Model-1'].parts['WIRE_BOI']
     session.viewports['Viewport: 1'].setValues(displayedObject=p)
     p.generateMesh()
+    
+    ####################################
+    ### CREATE ELEMENT SET (EXCLUDE WIRE AND PAYLOAD
+    ####################################
+    a = mdb.models['Model-1'].rootAssembly
+    a.regenerate()
+    elements1 = a.instances['Side_wall_1-1'].elements[:]
+    elements2 = a.instances['Connector_beam-1'].elements[:]
+    elements3 = a.instances['Side_wall_2-1'].elements[:]
+    elements4 = a.instances['CROSSMEMBER-1'].elements[:]
+    elements5 = a.instances['ARM-1'].elements[:]
+    
+    a.Set(elements=elements1+elements2+elements3+elements4+elements5, 
+        name='ALL_PART')
 
     # ####################################
     # ## Creation/Execution of the Job ###
@@ -1680,9 +1694,6 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     job.waitForCompletion()
     print 'Completed job'
 
-
-    STAWP
-
     ##END LOOP (i.e., end indentation)
 
     ##################################      
@@ -1693,13 +1704,13 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     prop = mdb.models[JobName].rootAssembly.getMassProperties()
     mass = prop['mass']
 
-    # Payload exit velocity & angle
-    velocity_max, veloAngle = Post_P_Script_Velo.getResults(JobName)
+    # # Payload exit velocity & angle
+    # velocity_max, veloAngle = Post_P_Script_Velo.getResults(JobName)
 
     # Max Mises stress in structure
-    maxMises = Post_P_Script.getResults(JobName)
+    outputList = Post_P_Script_Velo.getResults(JobName)
     # DataFile = open('PostData.txt','a')
     # DataFile.write('%10f %10f\n' % (sizes,maxMises))
     # DataFile.close()  
     
-    return mass, maxMises, velocity_max, veloAngle
+    return OutputList
