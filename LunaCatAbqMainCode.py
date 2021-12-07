@@ -1465,7 +1465,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     
     # Defining FollowThru step
     mdb.models['Model-1'].ImplicitDynamicsStep(name='FollowThru', previous='Launch', 
-        timePeriod=0.5, application=TRANSIENT_FIDELITY, initialInc=0.015, 
+        timePeriod=0.25, application=TRANSIENT_FIDELITY, initialInc=0.015, 
         minInc=2e-05, nohaf=OFF, initialConditions=ON)
     mdb.models['Model-1'].steps['FollowThru'].setValues(maxNumInc=300) ####JOB BROKE WITH ONLY 100 INCS LAST TIME   
        
