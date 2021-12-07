@@ -33,7 +33,7 @@ L2_percent_min = 5
 L2_percent_max = 20
 
 clevis_edge_thickness_min = 0.01 #
-clevis_edge_thickness_max = 0.2
+clevis_edge_thickness_max = 0.1
 
 side_wall_thickness_min = 0.01 #
 side_wall_thickness_max = 0.5
