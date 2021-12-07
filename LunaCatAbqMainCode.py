@@ -27,7 +27,6 @@ import mesh
 import job
 import sketch
 import visualization
-import json
 import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
@@ -35,9 +34,8 @@ from math import atan2, atan, sin, cos, tan, sqrt
 import Post_P_Script_Velo
 import Post_P_Script
 
-
-def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, L2_percent, CLEVIS_EDGE_THICK, WALL_THICKNESS):
-
+def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, L2_percent, CLEVIS_EDGE_THICK, XBEAM_EDGE_THICK):
+    print(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, L2_percent, CLEVIS_EDGE_THICK, XBEAM_EDGE_THICK)
     ######################################
     # Variable and Fixed Design Parameters
     ######################################
@@ -62,16 +60,17 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     ## PAYLOAD VARIABLES
     PAY_DESNITY = 9000
 
-    #WALL_THICKNESS = 0.1#m
+    WALL_THICKNESS = 0.1#m
     #WALL_LENGTH = 3.0 #m #DESIGN VARIABLE
-    WALL_HEIGHT = 0.5 #m ##### 12/06 6:01 PM CHANGEE!!
+    WALL_HEIGHT = 0.4 #m
 
     DRAW_WIRE_RADIUS = 0.01
+    WIRE_DRAW_DISTANCE = 0.2
 
     # Axle Beam Variables
     S1 = 0.1 #m  used to sketch the cross section
     #AXLE_LENGTH = 1.2 #m ###DESIGN VARIABLE
-    AXLE_DIAMETER = 0.25 #m  #### 12/06 6:01 PM CHANGEE!!
+    AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross section
 
 
     # Cross Member Variables
@@ -110,7 +109,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     L1 = L1_percent/100 * WALL_LENGTH
     L2 = L2_percent/100 * WALL_LENGTH
     #CLEVIS_EDGE_THICK = 0.05 #KDV 4
-    XBEAM_EDGE_THICK = CLEVIS_EDGE_THICK
+    # XBEAM_EDGE_THICK = 0.05 #KDV 5
 
     #fixed variables
     CLEVIS_DIST = (-WALL_LENGTH/2)+CLEVIS_RAD+CLEVIS_EDGE_THICK   ###MIDDLE OF CIRCULAR NOTCH
@@ -376,40 +375,44 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     s1.unsetPrimaryObject()
     del mdb.models['Model-1'].sketches['__profile__']
 
-    #Make the payload holders here
-    t = p.MakeSketchTransform(sketchPlane=f.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH-SPOON_LENGTH/2, 0.0, 
-        BASE_WIDTH)), sketchUpEdge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, BASE_WIDTH)), 
-        sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, origin=(ARM_LENGTH+BASE_LENGTH, TIP_HEIGHT/2, 
-        BASE_WIDTH))
-    s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=11.2, 
-        gridSpacing=0.28, transform=t)
-    g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
-    s.sketchOptions.setValues(decimalPlaces=3)
-    s.setPrimaryObject(option=SUPERIMPOSE)
-    p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+    # #Make the payload holders here
+    # t = p.MakeSketchTransform(sketchPlane=f.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH-SPOON_LENGTH/2, 0.0, 
+        # BASE_WIDTH)), sketchUpEdge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, BASE_WIDTH)), 
+        # sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, origin=(ARM_LENGTH+BASE_LENGTH, TIP_HEIGHT/2, 
+        # BASE_WIDTH))
+    # s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=11.2, 
+        # gridSpacing=0.28, transform=t)
+    # g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+    # s.sketchOptions.setValues(decimalPlaces=3)
+    # s.setPrimaryObject(option=SUPERIMPOSE)
+    # p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
 
-    #proximal flange
-    s.Line(point1=(0.0,0.0), point2=(0.0, SPOON_FLANGE_HEIGHT))
-    s.Line(point1=(0.0, SPOON_FLANGE_HEIGHT), point2=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_HEIGHT))
-    s.Line(point1=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_HEIGHT), point2=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_THICKNESS))
-    s.Line(point1=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_THICKNESS), point2=(SPOON_FLANGE_HEIGHT, SPOON_FLANGE_THICKNESS))
-    s.Line(point1=(SPOON_FLANGE_HEIGHT, SPOON_FLANGE_THICKNESS), point2=(SPOON_FLANGE_HEIGHT, 0.0))
-    s.Line(point1=(SPOON_FLANGE_HEIGHT, 0.0), point2=(0.0, 0.0))
+    # #proximal flange
+    # s.Line(point1=(0.0,0.0), point2=(0.0, SPOON_FLANGE_HEIGHT))
+    # s.Line(point1=(0.0, SPOON_FLANGE_HEIGHT), point2=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_HEIGHT))
+    # s.Line(point1=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_HEIGHT), point2=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_THICKNESS))
+    # s.Line(point1=(SPOON_FLANGE_THICKNESS, SPOON_FLANGE_THICKNESS), point2=(SPOON_FLANGE_HEIGHT, SPOON_FLANGE_THICKNESS))
+    # s.Line(point1=(SPOON_FLANGE_HEIGHT, SPOON_FLANGE_THICKNESS), point2=(SPOON_FLANGE_HEIGHT, 0.0))
+    # s.Line(point1=(SPOON_FLANGE_HEIGHT, 0.0), point2=(0.0, 0.0))
 
-    #distal flange
-    s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,0.0), point2=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,SPOON_FLANGE_THICKNESS))
-    s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,SPOON_FLANGE_THICKNESS), point2=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_THICKNESS))
-    s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_THICKNESS), point2=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_HEIGHT))
-    s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_HEIGHT), point2=(SPOON_LENGTH,SPOON_FLANGE_HEIGHT))
-    s.Line(point1=(SPOON_LENGTH,SPOON_FLANGE_HEIGHT), point2=(SPOON_LENGTH,0.0))
-    s.Line(point1=(SPOON_LENGTH,0.0), point2=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,0.0))
+    # #distal flange
+    # s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,0.0), point2=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,SPOON_FLANGE_THICKNESS))
+    # s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,SPOON_FLANGE_THICKNESS), point2=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_THICKNESS))
+    # s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_THICKNESS), point2=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_HEIGHT))
+    # s.Line(point1=(SPOON_LENGTH-SPOON_FLANGE_THICKNESS,SPOON_FLANGE_HEIGHT), point2=(SPOON_LENGTH,SPOON_FLANGE_HEIGHT))
+    # s.Line(point1=(SPOON_LENGTH,SPOON_FLANGE_HEIGHT), point2=(SPOON_LENGTH,0.0))
+    # s.Line(point1=(SPOON_LENGTH,0.0), point2=(SPOON_LENGTH-SPOON_FLANGE_HEIGHT,0.0))
 
-    p.SolidExtrude(sketchPlane=f1.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH-SPOON_LENGTH/2, 0.0, BASE_WIDTH)), 
-        sketchUpEdge=e1.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, BASE_WIDTH)), 
-        sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, sketch=s, depth=BASE_WIDTH, 
-        flipExtrudeDirection=ON)
-    s.unsetPrimaryObject()
-    del mdb.models['Model-1'].sketches['__profile__']
+    # p.SolidExtrude(sketchPlane=f1.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH-SPOON_LENGTH/2, 0.0, BASE_WIDTH)), 
+        # sketchUpEdge=e1.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, BASE_WIDTH)), 
+        # sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, sketch=s, depth=BASE_WIDTH, 
+        # flipExtrudeDirection=ON)
+    # s.unsetPrimaryObject()
+    # del mdb.models['Model-1'].sketches['__profile__']
+    
+    # #Deleting flanges
+    # p = mdb.models['Model-1'].parts['ARM']
+    # del p.features['Solid extrude-2']
     ########################################################################
 
     ####Making Parameterized payload
@@ -453,10 +456,11 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p = mdb.models['Model-1'].parts['Connector_beam']
     v2 = p.vertices
 
-    #Datum plane
+    #Datum plane on top side of connector beam close to clevis
     p.DatumPlaneByThreePoints(point1=v2.findAt(coordinates=(0.0, AXLE_DIAMETER, AXLE_LENGTH)), 
         point2=v2.findAt(coordinates=(AXLE_DIAMETER/2, AXLE_DIAMETER/2, AXLE_LENGTH)), point3=v2.findAt(
         coordinates=(AXLE_DIAMETER/2, AXLE_DIAMETER/2, 0.0)))
+        
 
     #Extruded slot in connector beam
     p = mdb.models['Model-1'].parts['Connector_beam']
@@ -672,52 +676,56 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
         thicknessAssignment=FROM_SECTION)
         
         
-        
+    ###DATUM ARRAY HEADQUARTERS
+    armDatumIndices = {} ### Creates array to reference datum plane
+    connectorBeamDatumIndices = {} ##Array for crossmember
+    payloadDatumIndices = {} ##Array for payload
+    
+    
     ##################################  
     # Create Composite Layup
     ##################################  
 
-    armDatumIndices = {} ### Creates array to reference datum plane
-    p = mdb.models['Model-1'].parts['ARM']
-    v, e = p.vertices, p.edges
-    d = p.datums
+    # p = mdb.models['Model-1'].parts['ARM']
+    # v, e = p.vertices, p.edges
+    # d = p.datums
         
-    p.DatumCsysByThreePoints(point2=v.findAt(coordinates=(0.0, BASE_HEIGHT/2, 0.0)), 
-        name='Datum csys-1', coordSysType=CARTESIAN, origin=(0.0, 0.0, 0.0), 
-        point1=p.InterestingPoint(edge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, 0.0)), 
-        rule=MIDDLE))
+    # p.DatumCsysByThreePoints(point2=v.findAt(coordinates=(0.0, BASE_HEIGHT/2, 0.0)), 
+        # name='Datum csys-1', coordSysType=CARTESIAN, origin=(0.0, 0.0, 0.0), 
+        # point1=p.InterestingPoint(edge=e.findAt(coordinates=(ARM_LENGTH+BASE_LENGTH+SPOON_LENGTH, 0.0, 0.0)), 
+        # rule=MIDDLE))
         
-    armDatumIndices['Composite-csys'] = d.keys()[-1]
-    layupOrientation = d[armDatumIndices['Composite-csys']]
+    # armDatumIndices['Composite-csys'] = d.keys()[-1]
+    # layupOrientation = d[armDatumIndices['Composite-csys']]
 
-    c = p.cells
-    cells = c.findAt(((0.0, 0.0, 0.0), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH, 0.0, 0.0), 
-        ))
-    region1=regionToolset.Region(cells=cells)
-    region2=regionToolset.Region(cells=cells)
-    region3=regionToolset.Region(cells=cells)
-    compositeLayup = mdb.models['Model-1'].parts['ARM'].CompositeLayup(
-        name='CompositeLayup-1', description='', elementType=SOLID, 
-        symmetric=False, thicknessAssignment=FROM_SECTION)
-    compositeLayup.ReferenceOrientation(orientationType=SYSTEM, 
-        localCsys=layupOrientation, fieldName='', 
-        additionalRotationType=ROTATION_NONE, angle=0.0, 
-        additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
-    compositeLayup.CompositePly(suppressed=True, plyName='Ply-1', region=region1, 
-        material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-        thickness=0.1, orientationType=ANGLE_0, 
-        additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-        axis=AXIS_3, angle=0.0, numIntPoints=3)
-    compositeLayup.CompositePly(suppressed=True, plyName='Ply-2', region=region2, 
-        material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-        thickness=0.1, orientationType=ANGLE_0, 
-        additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-        axis=AXIS_3, angle=45, numIntPoints=3)
-    compositeLayup.CompositePly(suppressed=True, plyName='Ply-3', region=region3, 
-        material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
-        thickness=0.1, orientationType=ANGLE_0, 
-        additionalRotationType=ROTATION_NONE, additionalRotationField='', 
-        axis=AXIS_3, angle=-45, numIntPoints=3)
+    # c = p.cells
+    # cells = c.findAt(((0.0, 0.0, 0.0), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH, 0.0, 0.0), 
+        # ))
+    # region1=regionToolset.Region(cells=cells)
+    # region2=regionToolset.Region(cells=cells)
+    # region3=regionToolset.Region(cells=cells)
+    # compositeLayup = mdb.models['Model-1'].parts['ARM'].CompositeLayup(
+        # name='CompositeLayup-1', description='', elementType=SOLID, 
+        # symmetric=False, thicknessAssignment=FROM_SECTION)
+    # compositeLayup.ReferenceOrientation(orientationType=SYSTEM, 
+        # localCsys=layupOrientation, fieldName='', 
+        # additionalRotationType=ROTATION_NONE, angle=0.0, 
+        # additionalRotationField='', axis=AXIS_3, stackDirection=STACK_3)
+    # compositeLayup.CompositePly(suppressed=True, plyName='Ply-1', region=region1, 
+        # material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+        # thickness=0.1, orientationType=ANGLE_0, 
+        # additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+        # axis=AXIS_3, angle=0.0, numIntPoints=3)
+    # compositeLayup.CompositePly(suppressed=True, plyName='Ply-2', region=region2, 
+        # material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+        # thickness=0.1, orientationType=ANGLE_0, 
+        # additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+        # axis=AXIS_3, angle=45, numIntPoints=3)
+    # compositeLayup.CompositePly(suppressed=True, plyName='Ply-3', region=region3, 
+        # material='Graphite Epoxy AS/3501', thicknessType=SPECIFY_THICKNESS, 
+        # thickness=0.1, orientationType=ANGLE_0, 
+        # additionalRotationType=ROTATION_NONE, additionalRotationField='', 
+        # axis=AXIS_3, angle=-45, numIntPoints=3)
 
 
 
@@ -725,7 +733,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     #Defining the face partitions
     ##################################  
     print('Partitioning part')
-
+    print('Partitioning arm')
     #### ARM ####
     #Datum Planes for Assembly
     p = mdb.models['Model-1'].parts[ARM_NAME]
@@ -741,8 +749,8 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     c = p.cells
     pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
     p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=BASE_LENGTH+ARM_LENGTH)
-    armDatumIndices['armplane2'] = p.datums.keys()[-1]
-    p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['armplane2']], cells=pickedCells)
+    armDatumIndices['spoon_terminus_yz'] = p.datums.keys()[-1]
+    p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['spoon_terminus_yz']], cells=pickedCells)
 
     #Partitioning side walls 
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=THICKNESS)
@@ -767,19 +775,26 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=TIP_HEIGHT/2)
     armDatumIndices['horizontal_long_spoon_xz_cut'] = p.datums.keys()[-1]
     c = p.cells
-    pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
-    p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['horizontal_long_spoon_xz_cut']], cells=pickedCells)
+    # pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, 0.0, BASE_WIDTH/2), ))
+    #p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['horizontal_long_spoon_xz_cut']], cells=pickedCells)
 
-    pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
-    p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['yz_arm_flange_thickness']], cells=pickedCells)
+    # pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
+    #p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['yz_arm_flange_thickness']], cells=pickedCells)
 
-    pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
-    p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['vertical_yz_edgeofspoon']], cells=pickedCells)
-
+    # pickedCells = c.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS/2, BASE_WIDTH/2), ))
+    #p.PartitionCellByDatumPlane(datumPlane=d[armDatumIndices['vertical_yz_edgeofspoon']], cells=pickedCells)
+    
+    
+    #Datum planes for Assembly
     p = mdb.models['Model-1'].parts['ARM']
     p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
+    armDatumIndices['Arm_base_assembly_plane_yz_a1'] = p.datums.keys()[-1]
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
+    armDatumIndices['Arm_side_principal_plane_xy'] = p.datums.keys()[-1]
+    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=BASE_WIDTH)
+    armDatumIndices['Arm_side_assembly_plane_xy_a2'] = p.datums.keys()[-1]
     p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=BASE_HEIGHT/2)
+    armDatumIndices['Arm_top_assembly_plane_xz_a3'] = p.datums.keys()[-1]
 
     #Partitioning spoon pull point node
 
@@ -799,10 +814,11 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     verts = v.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2, -TIP_HEIGHT/2, BASE_WIDTH/2), ))
     p.Set(vertices=verts, name='SPOON_PULL_POINT')
     ###RMW CHANGES END
-
+    print('Partitioning axle')
     ####AXLE#####
     #Creating Datum Planes for the AXLE (Connector_beam)
     p = mdb.models['Model-1'].parts['Connector_beam']
+    d = p.datums
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=WALL_THICKNESS/2)
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=AXLE_LENGTH-WALL_THICKNESS/2)
     # p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
@@ -816,29 +832,37 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=AXLE_LENGTH/2-BASE_WIDTH/2)
     p = mdb.models['Model-1'].parts['Connector_beam']
     v = p.vertices
+    #Datum plane on top inside side of connector beam slot parallel to arm
     p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(-AXLE_DIAMETER/4 - OFFSET, AXLE_DIAMETER/4 + OFFSET, 
         AXLE_LENGTH/2 + BASE_WIDTH/2)), point2=v.findAt(coordinates=(-AXLE_DIAMETER/4 - OFFSET, AXLE_DIAMETER/4 + OFFSET, 
         AXLE_LENGTH/2 - BASE_WIDTH/2)), 
         point3=v.findAt(coordinates=(AXLE_DIAMETER/4 - OFFSET, 3*AXLE_DIAMETER/4 + OFFSET, 
         AXLE_LENGTH/2 - BASE_WIDTH/2)))
+    connectorBeamDatumIndices['Crossbeam_top_inside_surface_assembly_a3'] = d.keys()[-1]
     v2 = p.vertices
+    #Datum plane on bottom surface of connector beam facing the ground orthogonal to arm
     p.DatumPlaneByThreePoints(point1=v2.findAt(coordinates=(-AXLE_DIAMETER/2, AXLE_DIAMETER/2, AXLE_LENGTH)), 
         point2=v2.findAt(coordinates=(0.0, 0.0, AXLE_LENGTH)), point3=v2.findAt(
         coordinates=(0.0, 0.0, 0.0)))
+    connectorBeamDatumIndices['Crossbeam_base_surface_assembly_a1'] = d.keys()[-1]
     v1 = p.vertices
     p = mdb.models['Model-1'].parts['Connector_beam']
     v = p.vertices
+    #Datum plane on side face of connector beam facing away from catapult parallel to arm
     p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(-AXLE_DIAMETER/2, AXLE_DIAMETER/2, AXLE_LENGTH)), 
         point2=v.findAt(coordinates=(0.0, AXLE_DIAMETER, AXLE_LENGTH)), point3=v.findAt(coordinates=(
         0.0, AXLE_DIAMETER, 0.0)))
     p = mdb.models['Model-1'].parts['Connector_beam']
     v = p.vertices
+    #Datum plane on bottom inside side face of connector beam slot parallel to arm
     p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(-AXLE_DIAMETER/4 + OFFSET, AXLE_DIAMETER/4 - OFFSET, 
         AXLE_LENGTH/2 + BASE_WIDTH/2)), point2=v.findAt(coordinates=(-AXLE_DIAMETER/4 + OFFSET, AXLE_DIAMETER/4 - OFFSET, 
         AXLE_LENGTH/2 - BASE_WIDTH/2)), 
         point3=v.findAt(coordinates=(AXLE_DIAMETER/4 + OFFSET, 3*AXLE_DIAMETER/4 - OFFSET, 
         AXLE_LENGTH/2 - BASE_WIDTH/2)))
+    #Datum plane on side wall of inside slot on left side if looking at catapult from the rear 
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=AXLE_LENGTH/2 + BASE_WIDTH/2)
+    connectorBeamDatumIndices['Crossbeam_base_surface_assembly_a2'] = d.keys()[-1]
 
     #Partitioning the AXLE
     c = p.cells
@@ -875,7 +899,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
         0, 0), ))
     d1 = p.datums
     p.PartitionCellByDatumPlane(datumPlane=d1[13], cells=pickedCells)
-
+    print('Partitioning side wall1')
     #### SIDE WALL 1 ####
     #Creating the Datum Points for Side Wall 1
     p = mdb.models['Model-1'].parts['Side_wall_1']
@@ -930,6 +954,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.PartitionCellByDatumPlane(datumPlane=d1[7], cells=pickedCells)
     p = mdb.models['Model-1'].parts['Side_wall_1']
     c = p.cells
+
     pickedCells = c.findAt(((-WALL_LENGTH/2 + CLEVIS_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ), ((X4-0.0001, 0.0, WALL_THICKNESS/2), ), (((X4+X3)/2, 0.0, WALL_THICKNESS/2), ), ((WALL_LENGTH/2 - XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ), ((WALL_LENGTH/2 -AXLE_DIAMETER - 3*XBEAM_EDGE_THICK/2, 0.0, WALL_THICKNESS/2), ))
     d2 = p.datums
     p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
@@ -996,7 +1021,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.regenerate()
 
 
-
+    print('Partitioning clevis')
     #### CLEVIS ####
     #Creating Datum Point For the CLEVIS
     p = mdb.models['Model-1'].parts[XBEAM_NAME]
@@ -1059,21 +1084,11 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     s = p.faces
     side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, -TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, -TIP_HEIGHT/2, BASE_WIDTH/2 -zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, -TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, -TIP_HEIGHT/2, BASE_WIDTH/2-zOff), ))
     p.Surface(side1Faces=side1Faces, name='SPOON_PULL_SURF')
+    
+    s = p.faces
+    side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2+xOff, TIP_HEIGHT/2, BASE_WIDTH/2 -zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, TIP_HEIGHT/2, BASE_WIDTH/2+zOff), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH/2-xOff, TIP_HEIGHT/2, BASE_WIDTH/2-zOff), ))
+    p.Surface(side1Faces=side1Faces, name='SPOON_TOP_SURF')
     #creating surface of the two L members that form spoon 
-
-    p = mdb.models['Model-1'].parts['ARM']
-    s = p.faces
-    coord = BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS, BASE_WIDTH/2
-    side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, BASE_WIDTH/2), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS, BASE_WIDTH/2), ))
-    p.Surface(side1Faces=side1Faces, name='SPOON_FRONT')
-
-
-    p = mdb.models['Model-1'].parts['ARM']
-    s = p.faces
-    coord = BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, BASE_WIDTH/2
-    side1Faces = s.findAt(((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS-(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS, BASE_WIDTH/2), ), ((BASE_LENGTH+ARM_LENGTH+SPOON_LENGTH-SPOON_FLANGE_THICKNESS, TIP_HEIGHT/2+SPOON_FLANGE_THICKNESS+(SPOON_FLANGE_HEIGHT-SPOON_FLANGE_THICKNESS)/2, BASE_WIDTH/2), ))
-    p.Surface(side1Faces=side1Faces, name='SPOON_BACK')
-
 
     #creating surfaces on CROSSMEMBER 
     #Left side surface
@@ -1166,10 +1181,13 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.Set(edges=edges, name='BACK_PAYLOAD')
     p = mdb.models['Model-1'].parts['Payload']
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0)
+    payloadDatumIndices['Pay_Principal_xy'] = p.datums.keys()[-1]
     p = mdb.models['Model-1'].parts['Payload']
     p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.0)
+    payloadDatumIndices['Pay_FrontPlane_yz'] = p.datums.keys()[-1]
     p = mdb.models['Model-1'].parts['Payload']
     p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=0.0)
+    payloadDatumIndices['Pay_BottomPlane_xz'] = p.datums.keys()[-1]
 
 
 
@@ -1229,25 +1247,99 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     d2 = a1.instances['Side_wall_2-1'].datums
     a1.CoincidentPoint(movablePoint=d1[10], fixedPoint=d2[4])
 
-
+    
     #Instance bt ARM and AXLE
     p = mdb.models['Model-1'].parts['ARM']
     a.Instance(name='ARM-1', part=p, dependent=ON)
     a = mdb.models['Model-1'].rootAssembly
+    d = p.datums
     d11 = a.instances['ARM-1'].datums
     d12 = a.instances['Connector_beam-1'].datums
-    a.FaceToFace(movablePlane=d11[23], fixedPlane=d12[11], flip=OFF, clearance=0.0)
+
+    #Constrain arm base to slot base
+    a.FaceToFace(movablePlane=d11[armDatumIndices['Arm_base_assembly_plane_yz_a1']], fixedPlane=d12[connectorBeamDatumIndices['Crossbeam_base_surface_assembly_a1']], flip=OFF, clearance=0.0)
     p = mdb.models['Model-1'].parts['Side_wall_1']
     d11 = a.instances['ARM-1'].datums
     d12 = a.instances['Connector_beam-1'].datums
-    a.FaceToFace(movablePlane=d11[25], fixedPlane=d12[10], flip=ON, clearance=0.0)
+    #Constrain arm side to slot side
+    a.FaceToFace(movablePlane=d11[armDatumIndices['Arm_side_assembly_plane_xy_a2']], fixedPlane=d12[connectorBeamDatumIndices['Crossbeam_base_surface_assembly_a2']], flip=OFF, clearance=0.0)
     d11 = a.instances['ARM-1'].datums
     d12 = a.instances['Connector_beam-1'].datums
-    a.FaceToFace(movablePlane=d11[24], fixedPlane=d12[9], flip=OFF, clearance=0.0)
+    #Constrain arm top to slot inside top
+    
+    d11 = a.instances['ARM-1'].datums
+    d12 = a.instances['Connector_beam-1'].datums
+    a.FaceToFace(movablePlane=d11[armDatumIndices['Arm_top_assembly_plane_xz_a3']], fixedPlane=d12[connectorBeamDatumIndices['Crossbeam_top_inside_surface_assembly_a3']], flip=ON, clearance=0.0)
+    
+    
+    
+    # #################################
+    # # Payload Stuff #################
+    # #################################
+    #Partitioning Payload
+    p = mdb.models['Model-1'].parts['Payload']
+    c = p.cells
+    d = p.datums
+    pickedCells = c.findAt(((0, 0, 0), ))
+    e, v, d = p.edges, p.vertices, p.datums
+    p.PartitionCellByPlanePointNormal(normal=e.findAt(coordinates=(PAY_LENGTH/2, PAY_HEIGHT, 
+        PAY_WIDTH)), cells=pickedCells, point=p.InterestingPoint(edge=e.findAt(
+        coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
+        PAY_WIDTH)), rule=MIDDLE))
+        
+    # xOffset = SPOON_FLANGE_HEIGHT/2
+    p = mdb.models['Model-1'].parts['Payload']
+    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2))
+    payloadDatumIndices['Pay_longitudinal_plane_xy'] = d.keys()[-1]
+    c = p.cells
+    pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+    d = p.datums
+    p.PartitionCellByDatumPlane(datumPlane=d[payloadDatumIndices['Pay_longitudinal_plane_xy']], cells=pickedCells)
+    # p = mdb.models['Model-1'].parts['Payload']
+    # p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(PAY_LENGTH-xOffset))
 
+    # c = p.cells
+    # pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
+    # d2 = p.datums
+    #p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
+    
+    v = p.vertices
+    verts = v.findAt(((PAY_LENGTH/2, 0.0, PAY_WIDTH/2), ))
+    p.Set(vertices=verts, name='PAY_PULL_POINT')
+    
+    s = p.faces
+    side1Faces = s.findAt(((PAY_LENGTH/4, 0.0, PAY_WIDTH/4), ), ((PAY_LENGTH/4, 0.0, 3*PAY_WIDTH/4), ), ((3*PAY_LENGTH/4, 0.0, PAY_WIDTH/4), ), ((3*PAY_LENGTH/4, 0.0, 3*PAY_WIDTH/4), ))
+    p.Surface(side1Faces=side1Faces, name='PAY_BOTTOM_SURF')
+    
+    #create bottom node set so that I can use it to enforce contact
+    f = p.faces
+    faces = f.findAt(((PAY_LENGTH/4, 0.0, PAY_WIDTH/4), ), ((PAY_LENGTH/4, 0.0, 3*PAY_WIDTH/4), ), 
+        ((3*PAY_LENGTH/4, 0.0, PAY_WIDTH/4), ), ((3*PAY_LENGTH/4, 0.0, 3*PAY_WIDTH/4), ))
+    p.Set(faces=faces, name='BOTTOM_PAYLOAD')
+    
+    print(payloadDatumIndices)
+    print(armDatumIndices)
+    ## Adding in payload instance 
+    a = mdb.models['Model-1'].rootAssembly
+    p = mdb.models['Model-1'].parts['Payload']
+    a.Instance(name='Payload-1', part=p, dependent=ON)
+    d11 = a.instances['Payload-1'].datums
+    d12 = a.instances['ARM-1'].datums
+    a.FaceToFace(movablePlane=d11[payloadDatumIndices['Pay_FrontPlane_yz']], fixedPlane=d12[armDatumIndices['spoon_terminus_yz']], flip=OFF, clearance=0.0)
+    d11 = a.instances['Payload-1'].datums
+    d12 = a.instances['ARM-1'].datums
+    a.FaceToFace(movablePlane=d11[payloadDatumIndices['Pay_Principal_xy']], fixedPlane=d12[armDatumIndices['Arm_side_principal_plane_xy']], flip=OFF, clearance=0.0)
+    d11 = a.instances['Payload-1'].datums
+    d12 = a.instances['ARM-1'].datums
+    a.FaceToFace(movablePlane=d11[payloadDatumIndices['Pay_BottomPlane_xz']], fixedPlane=d12[armDatumIndices['horizontal_long_spoon_xz_cut']], flip=OFF, clearance=0.0)
+    
+    ###############################
+    #CLEVIS ROTATION 
+    ###############################
+    
     #extract locations of pull points
     # 'AXLE_CENTER_POINT' CHANGES RMW 12/3
-    spoonCoords = mdb.models['Model-1'].rootAssembly.instances['ARM-1'].sets['SPOON_PULL_POINT'].vertices[0].pointOn[0]
+    spoonCoords = mdb.models['Model-1'].rootAssembly.instances['Payload-1'].sets['PAY_PULL_POINT'].vertices[0].pointOn[0]
     clevisAxleCoords = mdb.models['Model-1'].rootAssembly.instances['Side_wall_1-1'].datums[4].pointOn #NOTE!!! add a dynamic refence to the datum index (like I did for the arm)
 
     print(spoonCoords)
@@ -1270,57 +1362,6 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     print(ropeDistance)
     #END CHANGES RMW 12/3
 
-    ## Adding in payload instance 
-    a = mdb.models['Model-1'].rootAssembly
-    p = mdb.models['Model-1'].parts['Payload']
-    a.Instance(name='Payload-1', part=p, dependent=ON)
-    d11 = a.instances['Payload-1'].datums
-    d12 = a.instances['ARM-1'].datums
-    a.FaceToFace(movablePlane=d11[5], fixedPlane=d12[13], flip=OFF, clearance=0.0)
-    d11 = a.instances['Payload-1'].datums
-    d12 = a.instances['ARM-1'].datums
-    a.FaceToFace(movablePlane=d11[7], fixedPlane=d12[19], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
-    d11 = a.instances['Payload-1'].datums
-    d12 = a.instances['ARM-1'].datums
-    a.FaceToFace(movablePlane=d11[6], fixedPlane=d12[17], flip=OFF, clearance=1.5*SPOON_FLANGE_THICKNESS)
-
-    ###############################
-    #PAYLOAD CONTACT###############
-    ###############################
-    #Back of the spoon contact
-    # a = mdb.models['Model-1'].rootAssembly
-    # a.regenerate()
-
-    # mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].NormalBehavior(
-        # pressureOverclosure=HARD, allowSeparation=ON, 
-        # constraintEnforcementMethod=DEFAULT)
-    # # mdb.models['Model-1'].interactionProperties['PayloadContactProperty'].tangentialBehavior.setValues(
-        # # formulation=ROUGH)    
-    # #: The interaction property "PayloadContactProperty" has been created.
-    # a = mdb.models['Model-1'].rootAssembly
-    # region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
-    # a = mdb.models['Model-1'].rootAssembly
-    # region2=a.instances['Payload-1'].sets['BACK_PAYLOAD']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayloadContact', 
-        # createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
-        # thickness=ON, interactionProperty='PayloadContactProperty', 
-        # adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
-        # clearanceRegion=None)
-    # #: The interaction "BackPayloadContact" has been created.
-
-    # #front of the spoon contact
-    # a = mdb.models['Model-1'].rootAssembly
-    # region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
-    # a = mdb.models['Model-1'].rootAssembly
-    # region2=a.instances['Payload-1'].sets['FRONT_PAYLOAD']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayloadContact', 
-        # createStepName='Initial', master=region1, slave=region2, sliding=FINITE, 
-        # thickness=ON, interactionProperty='PayloadContactProperty', 
-        # adjustMethod=NONE, initialClearance=OMIT, datumAxis=None, 
-        # clearanceRegion=None)
-    # #: The interaction "FrontPayloadContact" has been created.
-
-
     ###############################
     #WIRE CREATION AND MANIPULATION
     ###############################
@@ -1339,9 +1380,11 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     del mdb.models['Model-1'].sketches['__profile__']
 
     #create wire material with negative thermal expansion
+    CTE_VAL = WIRE_DRAW_DISTANCE*ropeDistance
+    
     mdb.models['Model-1'].Material(name='WireMatl')
-    mdb.models['Model-1'].materials['WireMatl'].Expansion(table=((-0.5, ), ))
-    mdb.models['Model-1'].materials['WireMatl'].Density(table=((1000.0, ), ))
+    mdb.models['Model-1'].materials['WireMatl'].Expansion(table=((-CTE_VAL, ), ))
+    mdb.models['Model-1'].materials['WireMatl'].Density(table=((9000.0, ), ))
     mdb.models['Model-1'].materials['WireMatl'].Elastic(table=((10000000000.0, 
         0.3), ))
 
@@ -1389,94 +1432,6 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     a1.translate(instanceList=('WIRE_BOI-1', ), vector=(0.0, 0.0, spoonCoords[2]))
 
 
-    # #################################
-    # # Payload Stuff #################
-    # #################################
-    #Partitioning Payload
-        p = mdb.models['Model-1'].parts['Payload']
-    c = p.cells
-    pickedCells = c.findAt(((0, 0, 0), ))
-    e, v, d = p.edges, p.vertices, p.datums
-    p.PartitionCellByPlanePointNormal(normal=e.findAt(coordinates=(PAY_LENGTH/2, PAY_HEIGHT, 
-        PAY_WIDTH)), cells=pickedCells, point=p.InterestingPoint(edge=e.findAt(
-        coordinates=(PAY_LENGTH/4, PAY_HEIGHT, 
-        PAY_WIDTH)), rule=MIDDLE))
-        
-    xOffset = SPOON_FLANGE_HEIGHT/2
-    p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=(PAY_WIDTH/2))
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
-    d = p.datums
-    p.PartitionCellByDatumPlane(datumPlane=d[9], cells=pickedCells)
-
-    p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(PAY_LENGTH-xOffset))
-    p = mdb.models['Model-1'].parts['Payload']
-    p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=xOffset)
-    p = mdb.models['Model-1'].parts['Payload']
-    c = p.cells
-    pickedCells = c.findAt(((PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ), ((3*PAY_LENGTH/4, PAY_HEIGHT/2, PAY_WIDTH/2), ))
-    d2 = p.datums
-    #p.PartitionCellByDatumPlane(datumPlane=d2[11], cells=pickedCells)
-    v = p.vertices
-    verts = v.findAt(((PAY_LENGTH/2, 0.0, PAY_WIDTH/2), ))
-    p.Set(vertices=verts, name='PAY_PULL_POINT')
-    s = p.faces
-    side1Faces = s.findAt(((PAY_LENGTH/2+xOffset, 0.0, PAY_WIDTH/2+xOffset), ), ((PAY_LENGTH/2-xOffset, 0.0, PAY_WIDTH/2+xOffset), ), ((PAY_LENGTH/2+xOffset, 0.0, PAY_WIDTH/2-xOffset), ), ((PAY_LENGTH/2-xOffset, 0.0, PAY_WIDTH/2-xOffset), ))
-    p.Surface(side1Faces=side1Faces, name='PAY_BOTTOM_SURF')
-    
-    
-    
-    #Payload contact
-    # a = mdb.models['Model-1'].rootAssembly
-    # a.regenerate()
-    # mdb.models['Model-1'].ContactProperty('PayContactProperty')
-    # mdb.models['Model-1'].interactionProperties['PayContactProperty'].TangentialBehavior(
-        # formulation=FRICTIONLESS)
-    # mdb.models['Model-1'].interactionProperties['PayContactProperty'].NormalBehavior(
-        # pressureOverclosure=HARD, allowSeparation=ON, 
-        # constraintEnforcementMethod=DEFAULT)
-    # #: The interaction property "PayContactProperty" has been created.
-    # a = mdb.models['Model-1'].rootAssembly
-    # region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
-    # a = mdb.models['Model-1'].rootAssembly
-    # region2=a.instances['Payload-1'].surfaces['FrontPayload']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontPayContact', 
-        # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-        # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-        # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-    # #: The interaction "FrontPayContact" has been created.
-
-    # region1=a.instances['ARM-1'].surfaces['SPOON_FRONT']
-    # a = mdb.models['Model-1'].rootAssembly
-    # region2=a.instances['Payload-1'].surfaces['FrontBottomPayload']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='FrontBottomPayContact', 
-        # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-        # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-        # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-    # #: The interaction "FrontBottomPayContact" has been created.
-
-    # region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
-    # a = mdb.models['Model-1'].rootAssembly
-    # region2=a.instances['Payload-1'].surfaces['BackPayload']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackPayContact', 
-        # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-        # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-        # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-    # #: The interaction "BackPayContact" has been created.
-
-    # region1=a.instances['ARM-1'].surfaces['SPOON_BACK']
-    # a = mdb.models['Model-1'].rootAssembly
-    # region2=a.instances['Payload-1'].surfaces['BackBottomPayload']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='BackBottomPayContact', 
-        # createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
-        # thickness=ON, interactionProperty='PayContactProperty', adjustMethod=NONE, 
-        # initialClearance=OMIT, datumAxis=None, clearanceRegion=None)
-    # #: The interaction "BackBottomPayContact" has been created.
-
-
-
     ##################################  
     #Define Steps
     ##################################  
@@ -1489,21 +1444,30 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
         crossSectionDistribution=CONSTANT_THROUGH_THICKNESS, magnitudes=(0.0, ))
 
     # Defining Loading step
-    mdb.models['Model-1'].ImplicitDynamicsStep(name='Loading', previous='Initial', 
-        maxNumInc=30, application=QUASI_STATIC, initialInc=0.1, nohaf=OFF, 
-        amplitude=RAMP, alpha=DEFAULT, initialConditions=OFF, nlgeom=ON)
-    mdb.models['Model-1'].steps['Loading'].setValues(timePeriod=5.0, maxNumInc=500, 
-        initialInc=0.5, minInc=5e-05)
+    # mdb.models['Model-1'].ImplicitDynamicsStep(name='Loading', previous='Initial', 
+        # maxNumInc=30, application=QUASI_STATIC, initialInc=0.1, nohaf=OFF, 
+        # amplitude=RAMP, alpha=DEFAULT, initialConditions=OFF, nlgeom=ON)
+    # mdb.models['Model-1'].steps['Loading'].setValues(timePeriod=1.0, maxNumInc=500, 
+        # initialInc=0.1, minInc=5e-05)
+    mdb.models['Model-1'].StaticStep(name='Loading', previous='Initial', 
+        maxNumInc=30, initialInc=0.1, nlgeom=ON)
+    mdb.models['Model-1'].steps['Loading'].setValues(timePeriod=1.0, maxNumInc=500, minInc=5e-05)
+        
     # Defining Launch step
     mdb.models['Model-1'].ImplicitDynamicsStep(name='Launch', previous='Loading', 
         timePeriod=0.01, application=TRANSIENT_FIDELITY, initialInc=0.01, 
         minInc=2e-07, nohaf=OFF, initialConditions=ON)
     mdb.models['Model-1'].steps['Launch'].setValues(maxNumInc=500)
+    
+    # Defining Buckling step
+    mdb.models['Model-1'].BuckleStep(name='BuckleCheck', previous='Loading', numEigen=1, 
+        eigensolver=LANCZOS, minEigen=None, blockSize=DEFAULT, maxBlocks=DEFAULT)
+    
     # Defining FollowThru step
     mdb.models['Model-1'].ImplicitDynamicsStep(name='FollowThru', previous='Launch', 
-        timePeriod=0.1, application=TRANSIENT_FIDELITY, initialInc=0.015, 
+        timePeriod=0.5, application=TRANSIENT_FIDELITY, initialInc=0.015, 
         minInc=2e-05, nohaf=OFF, initialConditions=ON)
-    mdb.models['Model-1'].steps['FollowThru'].setValues(maxNumInc=150) ####JOB BROKE WITH ONLY 100 INCS LAST TIME   
+    mdb.models['Model-1'].steps['FollowThru'].setValues(maxNumInc=300) ####JOB BROKE WITH ONLY 100 INCS LAST TIME   
        
     #update save increments for ODB output
     mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValuesInStep(
@@ -1563,8 +1527,14 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     mdb.models['Model-1'].Tie(name='Lower_Wire_Tie', master=region1, slave=region2, 
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
         
-    #Tie Wire to the Spoon Back
-    region1=a.instances['ARM-1'].surfaces['SPOON_PULL_SURF']
+    # #Tie Wire to the Spoon Back
+    # region1=a.instances['ARM-1'].surfaces['SPOON_PULL_SURF']
+    # region2=a.sets['WireEnd_Arm']
+    # mdb.models['Model-1'].Tie(name='Upper_Wire_Tie', master=region1, slave=region2, 
+        # positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+    
+    #Tie Wire to the Payload Bottom
+    region1=a.instances['Payload-1'].surfaces['PAY_BOTTOM_SURF']
     region2=a.sets['WireEnd_Arm']
     mdb.models['Model-1'].Tie(name='Upper_Wire_Tie', master=region1, slave=region2, 
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
@@ -1577,7 +1547,24 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     #: The interaction "Int-2" has been created.
     # mdb.models['Model-1'].interactions['Int-1'].reset('Launch')
 
-
+    #ADD CONTACT
+    #define contact property
+    mdb.models['Model-1'].ContactProperty('PayloadRoughContactProp')
+    mdb.models['Model-1'].interactionProperties['PayloadRoughContactProp'].TangentialBehavior(
+        formulation=ROUGH)
+    mdb.models['Model-1'].interactionProperties['PayloadRoughContactProp'].NormalBehavior(
+        pressureOverclosure=LINEAR, contactStiffness=10000000000.0, 
+        constraintEnforcementMethod=DEFAULT)
+    
+    #Create non-sliding contact b/n payload and arm
+    region1=a.instances['ARM-1'].surfaces['SPOON_TOP_SURF']
+    region2=a.instances['Payload-1'].surfaces['PAY_BOTTOM_SURF']
+    regionDef=mdb.models['Model-1'].rootAssembly.allInstances['Payload-1'].sets['BOTTOM_PAYLOAD']
+    mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='ROUGH_CONTACT', 
+        createStepName='Initial', master=region1, slave=region2, sliding=SMALL, 
+        thickness=ON, interactionProperty='PayloadRoughContactProp', 
+        adjustMethod=SET, initialClearance=OMIT, datumAxis=None, 
+        clearanceRegion=None, tied=OFF, adjustSet=regionDef)
 
     ##################################  
     #Create Loads
@@ -1587,7 +1574,11 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     mdb.models['Model-1'].Gravity(name='Load-1', createStepName='Loading', 
         comp2=-1.62, distributionType=UNIFORM, field='')
         
-        
+    #BuckleCheck Dummy Load
+    region = a.instances['Payload-1'].sets['PAY_PULL_POINT']
+    mdb.models['Model-1'].ConcentratedForce(name='BuckleDummy', 
+        createStepName='BuckleCheck', region=region, cf1=1.0, cf2=-1.0,
+        distributionType=UNIFORM, field='', localCsys=None)   
         
         
     ##################################  
@@ -1608,8 +1599,12 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
         region=region, u1=UNSET, u2=UNSET, u3=UNSET, ur1=SET, ur2=SET, ur3=UNSET, 
         amplitude=UNSET, distributionType=UNIFORM, fieldName='', localCsys=None)
 
-
-
+    #prevent payload from sliding in Z direction
+    # region = a.instances['Payload-1'].sets['Set-1']
+    # mdb.models['Model-1'].DisplacementBC(name='PayloadNoZSlide', 
+        # createStepName='Initial', region=region, u1=UNSET, u2=UNSET, u3=SET, 
+        # ur1=UNSET, ur2=UNSET, ur3=UNSET, amplitude=UNSET, distributionType=UNIFORM, 
+        # fieldName='', localCsys=None)
     ##################################      
     #Mesh Parts
     ##################################  
@@ -1619,7 +1614,6 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p = mdb.models['Model-1'].parts['ARM']
     p.seedPart(size=0.1, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
-
 
     ##Meshing Crossmember
     p = mdb.models['Model-1'].parts['CROSSMEMBER']
@@ -1662,16 +1656,12 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     session.viewports['Viewport: 1'].setValues(displayedObject=p)
     p.generateMesh()
 
-
-
-
-    stopppp
     # ####################################
     # ## Creation/Execution of the Job ###
     # ####################################
     print 'Creating/Running Job'
     ModelName='Model-1'
-    JobName = 'MasonToldMeThis'
+    JobName = 'Job-1'
     mdb.Job(name=JobName, model=ModelName, description='', type=ANALYSIS, 
         atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90, 
         memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True, 
@@ -1691,7 +1681,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     print 'Completed job'
 
 
-
+    STAWP
 
     ##END LOOP (i.e., end indentation)
 
