@@ -34,8 +34,8 @@ from math import atan2, atan, sin, cos, tan, sqrt
 import Post_P_Script_Velo
 import Post_P_Script
 
-def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, L2_percent, CLEVIS_EDGE_THICK, XBEAM_EDGE_THICK):
-    print(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, L2_percent, CLEVIS_EDGE_THICK, XBEAM_EDGE_THICK)
+def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent,  CLEVIS_EDGE_THICK):
+    print(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, CLEVIS_EDGE_THICK)
     ######################################
     # Variable and Fixed Design Parameters
     ######################################
@@ -107,9 +107,9 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     #### 5 design variables for top opt
     #ToptThickness = 0.075 #KDV 1
     L1 = L1_percent/100 * WALL_LENGTH
-    L2 = L2_percent/100 * WALL_LENGTH
+    L2 = L1
     #CLEVIS_EDGE_THICK = 0.05 #KDV 4
-    # XBEAM_EDGE_THICK = 0.05 #KDV 5
+    XBEAM_EDGE_THICK = CLEVIS_EDGE_THICK #KDV 5
 
     #fixed variables
     CLEVIS_DIST = (-WALL_LENGTH/2)+CLEVIS_RAD+CLEVIS_EDGE_THICK   ###MIDDLE OF CIRCULAR NOTCH
@@ -1710,4 +1710,4 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     # Max Mises stress in structure
     outputList = Post_P_Script_Velo.getResults(JobName) 
     
-    return outputList
+    return veloMagMax,veloAngle,eigenVal1,maxMises, mass 
