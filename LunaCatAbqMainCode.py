@@ -1701,7 +1701,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     ################################## 
 
     # Mass
-    prop = mdb.models[JobName].rootAssembly.getMassProperties()
+    prop = mdb.models[ModelName].rootAssembly.getMassProperties()
     mass = prop['mass']
 
     # # Payload exit velocity & angle
