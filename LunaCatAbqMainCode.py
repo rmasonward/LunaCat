@@ -1708,9 +1708,6 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     # velocity_max, veloAngle = Post_P_Script_Velo.getResults(JobName)
 
     # Max Mises stress in structure
-    outputList = Post_P_Script_Velo.getResults(JobName)
-    # DataFile = open('PostData.txt','a')
-    # DataFile.write('%10f %10f\n' % (sizes,maxMises))
-    # DataFile.close()  
+    outputList = Post_P_Script_Velo.getResults(JobName) 
     
-    return OutputList
+    return outputList
