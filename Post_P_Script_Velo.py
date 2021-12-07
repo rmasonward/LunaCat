@@ -13,8 +13,8 @@ def getResults(ModelName):
 
     """
     This ODB reading script does the following:
-    -Retrieves the displacement at TIPNODE
-    -Scans for max. Mises stress in a part (if set exists)
+    -Scans to see when the there is no more contact between the payload and arm
+    -Pulls the velocity of the payload at this point
     """
     
     # Open the output database.
@@ -29,27 +29,31 @@ def getResults(ModelName):
 
     # Selecting the node(s) to be queried
     pTip = odb.rootAssembly.instances['ARM-1'].nodeSets['SPOON_PULL_POINT']
-        
+    payPoint = odb.rootAssembly.instances['Payload-1'].nodeSets['PAY_PULL_POINT']
+    
     veloMagMax = 0
     veloAngle = 0
     
     print("Found pTip")
     
+        #looking for when there is no contact and taking velocity at that point
     for frame in launchFrames:
+        framecontact = frame.fieldOutputs['CPRESS'].getSubset(region=payPoint).values[0].data
         #want V1, V2
-        frameVelo = frame.fieldOutputs['V'].getSubset(region=pTip).values[0].data
+        if framecontact < 0.0001:
+            frameVelo = frame.fieldOutputs['V'].getSubset(region=pTip).values[0].data
 
-        veloX = frameVelo[0]
-        veloY = frameVelo[1]
-        
-        frameVeloMag = math.sqrt(veloX**2 + veloY**2)
-        if frameVeloMag > veloMagMax:
-            veloMagMax = frameVeloMag
-            veloAngle = math.atan2(veloX,veloY)
+            veloX = frameVelo[0]
+            veloY = frameVelo[1]
+            
+            frameVeloMag = math.sqrt(veloX**2 + veloY**2)
+            if frameVeloMag > veloMagMax:
+                veloMagMax = frameVeloMag
+                veloAngle = math.atan2(veloX,veloY)
     
     print("Found the maximum velocity and angle")
     
-        
+    
     # # Retrieve Y-displacements at the splines/connectors
     # print 'Retrieving ALL final displacements at ALL points'
     # dispField = lastFrame.fieldOutputs['U']
@@ -148,6 +152,3 @@ def createXYPlot(vpOrigin, vpName, plotName, data):
     vp.setValues(displayedObject=xyPlot)
     print 'Plot displayed'
     return
-
-
-   
