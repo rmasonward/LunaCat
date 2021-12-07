@@ -34,7 +34,7 @@ from math import atan2, atan, sin, cos, tan, sqrt
 import Post_P_Script_Velo
 import Post_P_Script
 
-def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent,  CLEVIS_EDGE_THICK):
+def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent,CLEVIS_EDGE_THICK):
     print(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_LENGTH, AXLE_LENGTH, MATERIAL_TYPE, ToptThickness, L1_percent, CLEVIS_EDGE_THICK)
     ######################################
     # Variable and Fixed Design Parameters
@@ -58,11 +58,17 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     SPOON_FLANGE_HEIGHT = 0.01 #m
 
     ## PAYLOAD VARIABLES
-    PAY_DESNITY = 9000
+    PAY_MASS = 20 #kg
+    
+    PAY_LENGTH = SPOON_LENGTH - 5.0 * SPOON_FLANGE_THICKNESS
+    PAY_HEIGHT = PAY_LENGTH/2
+    PAY_WIDTH = BASE_WIDTH
+    
+    PAY_DESNITY = PAY_MASS/(PAY_LENGTH*PAY_HEIGHT*PAY_WIDTH)
 
     WALL_THICKNESS = 0.1#m
     #WALL_LENGTH = 3.0 #m #DESIGN VARIABLE
-    WALL_HEIGHT = 0.4 #m
+    WALL_HEIGHT = 0.6 #m
 
     DRAW_WIRE_RADIUS = 0.01
     WIRE_DRAW_DISTANCE = 0.2
@@ -70,7 +76,8 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     # Axle Beam Variables
     S1 = 0.1 #m  used to sketch the cross section
     #AXLE_LENGTH = 1.2 #m ###DESIGN VARIABLE
-    AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross section
+    
+    AXLE_DIAMETER = 2*(BASE_HEIGHT+0.05)/sqrt(2) #0.45 #m  this is defined as the hypotenuse of the square cross section
 
 
     # Cross Member Variables
@@ -137,7 +144,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     X6 = X1
     Y6 = 0
 
-
+    print("Top Opt Points: "+str(((X1,Y1),(X2,Y2),(X3,Y3),(X4,Y4),(X5,Y5),(X6,Y6))))
     #Part Names
     OUTER_ARM_NAME = "OUTER_ARM_SOLID"
     INNER_ARM_NAME = "ARM_VOID_SPACE"
@@ -253,6 +260,8 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     s.unsetPrimaryObject()
     p = mdb.models['Model-1'].parts['XbeamCutOut']
     #Creating top opt cut 
+    
+    print("Beginning Top Opt Cut")
     mdb.models['Model-1'].sketches.changeKey(fromName='__profile__', 
         toName='__save__')
     s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
@@ -273,6 +282,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     s.unsetPrimaryObject()
     p = mdb.models['Model-1'].parts['TopOptCut']
 
+    print("Finished Top Opt Cut")
     ## Cleaning up model
     p1 = mdb.models['Model-1'].parts['XbeamCutOut']
     session.viewports['Viewport: 1'].setValues(displayedObject=p1)
@@ -416,9 +426,6 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     ########################################################################
 
     ####Making Parameterized payload
-    PAY_LENGTH = SPOON_LENGTH - 5.0 * SPOON_FLANGE_THICKNESS
-    PAY_HEIGHT = PAY_LENGTH/2
-    PAY_WIDTH = BASE_WIDTH
     s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=10.0)
     g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
     s.setPrimaryObject(option=STANDALONE)
@@ -832,6 +839,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=AXLE_LENGTH/2-BASE_WIDTH/2)
     p = mdb.models['Model-1'].parts['Connector_beam']
     v = p.vertices
+    print("axle datum 1")
     #Datum plane on top inside side of connector beam slot parallel to arm
     p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(-AXLE_DIAMETER/4 - OFFSET, AXLE_DIAMETER/4 + OFFSET, 
         AXLE_LENGTH/2 + BASE_WIDTH/2)), point2=v.findAt(coordinates=(-AXLE_DIAMETER/4 - OFFSET, AXLE_DIAMETER/4 + OFFSET, 
@@ -840,6 +848,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
         AXLE_LENGTH/2 - BASE_WIDTH/2)))
     connectorBeamDatumIndices['Crossbeam_top_inside_surface_assembly_a3'] = d.keys()[-1]
     v2 = p.vertices
+    print("axle datum 2")
     #Datum plane on bottom surface of connector beam facing the ground orthogonal to arm
     p.DatumPlaneByThreePoints(point1=v2.findAt(coordinates=(-AXLE_DIAMETER/2, AXLE_DIAMETER/2, AXLE_LENGTH)), 
         point2=v2.findAt(coordinates=(0.0, 0.0, AXLE_LENGTH)), point3=v2.findAt(
@@ -848,12 +857,14 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     v1 = p.vertices
     p = mdb.models['Model-1'].parts['Connector_beam']
     v = p.vertices
+    print("axle datum 3")
     #Datum plane on side face of connector beam facing away from catapult parallel to arm
     p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(-AXLE_DIAMETER/2, AXLE_DIAMETER/2, AXLE_LENGTH)), 
         point2=v.findAt(coordinates=(0.0, AXLE_DIAMETER, AXLE_LENGTH)), point3=v.findAt(coordinates=(
         0.0, AXLE_DIAMETER, 0.0)))
     p = mdb.models['Model-1'].parts['Connector_beam']
     v = p.vertices
+    print("axle datum 4")
     #Datum plane on bottom inside side face of connector beam slot parallel to arm
     p.DatumPlaneByThreePoints(point1=v.findAt(coordinates=(-AXLE_DIAMETER/4 + OFFSET, AXLE_DIAMETER/4 - OFFSET, 
         AXLE_LENGTH/2 + BASE_WIDTH/2)), point2=v.findAt(coordinates=(-AXLE_DIAMETER/4 + OFFSET, AXLE_DIAMETER/4 - OFFSET, 
@@ -863,7 +874,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     #Datum plane on side wall of inside slot on left side if looking at catapult from the rear 
     p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=AXLE_LENGTH/2 + BASE_WIDTH/2)
     connectorBeamDatumIndices['Crossbeam_base_surface_assembly_a2'] = d.keys()[-1]
-
+    print("actualy begin partitioning axle")
     #Partitioning the AXLE
     c = p.cells
     pickedCells = c.findAt(((0, 0, 0), ))
@@ -1465,7 +1476,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     
     # Defining FollowThru step
     mdb.models['Model-1'].ImplicitDynamicsStep(name='FollowThru', previous='Launch', 
-        timePeriod=0.25, application=TRANSIENT_FIDELITY, initialInc=0.015, 
+        timePeriod=0.15, application=TRANSIENT_FIDELITY, initialInc=0.015, 
         minInc=2e-05, nohaf=OFF, initialConditions=ON)
     mdb.models['Model-1'].steps['FollowThru'].setValues(maxNumInc=300) ####JOB BROKE WITH ONLY 100 INCS LAST TIME   
        
@@ -1608,19 +1619,23 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     ##################################      
     #Mesh Parts
     ##################################  
-    print('Meshing the Part')
+    print('Meshing the Parts')
 
+    print('Meshing the Arm')
     ##Meshing Arm
     p = mdb.models['Model-1'].parts['ARM']
     p.seedPart(size=0.1, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
 
+    print('Meshing the Crossmember')
     ##Meshing Crossmember
     p = mdb.models['Model-1'].parts['CROSSMEMBER']
     c = p.cells
-    pickedRegions = c.findAt(((0,0,0), ), ((0,0,AXLE_DIAMETER/2), ), ((AXLE_LENGTH/2-0.001,0,0), ), ((AXLE_LENGTH/2-0.001, 0, 
-        AXLE_DIAMETER/2), ), ((AXLE_LENGTH/2+0.001,0,0), ), ((AXLE_LENGTH/2+0.001, 0, 
-        AXLE_DIAMETER/2), ), ((AXLE_LENGTH,0,0), ), ((AXLE_LENGTH,0,AXLE_DIAMETER/2), ))
+    vertOffset = XBEAM_AXLE_DIA*0.75
+    yAxleOrigin = vertOffset/2
+    zAxleOrigin = XBEAM_THICKNESS/2
+
+    pickedRegions = c.findAt(((WALL_THICKNESS/2,yAxleOrigin,zAxleOrigin+XBEAM_AXLE_DIA/2), ), ((WALL_THICKNESS+WALL_SEP_LENGTH/4,yAxleOrigin,zAxleOrigin+XBEAM_AXLE_DIA/2), ), ((WALL_THICKNESS+3*WALL_SEP_LENGTH/4,yAxleOrigin,zAxleOrigin+XBEAM_AXLE_DIA/2), ), ((AXLE_LENGTH-WALL_THICKNESS/2,yAxleOrigin,zAxleOrigin+XBEAM_AXLE_DIA/2), ), ((WALL_THICKNESS/2,yAxleOrigin,zAxleOrigin-XBEAM_AXLE_DIA/2), ), ((WALL_THICKNESS+WALL_SEP_LENGTH/4,yAxleOrigin,zAxleOrigin-XBEAM_AXLE_DIA/2), ), ((WALL_THICKNESS+3*WALL_SEP_LENGTH/4,yAxleOrigin,zAxleOrigin-XBEAM_AXLE_DIA/2), ), ((AXLE_LENGTH-WALL_THICKNESS/2,yAxleOrigin,zAxleOrigin-XBEAM_AXLE_DIA/2), ))
     p.setMeshControls(regions=pickedRegions, elemShape=TET, technique=FREE)
     elemType1 = mesh.ElemType(elemCode=C3D20R)
     elemType2 = mesh.ElemType(elemCode=C3D15)
@@ -1631,26 +1646,31 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     p.seedPart(size=0.025, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
 
+    print('Meshing the Axle')
     ##Meshing Connector beam
     p = mdb.models['Model-1'].parts['Connector_beam']
     p.seedPart(size=0.036, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
 
+    print('Meshing the Pyaload')
     ##Meshing Payload
     p = mdb.models['Model-1'].parts['Payload']
     p.seedPart(size=0.019, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
 
+    print('Meshing the Sidewall 1')
     ##Meshing Side wall 1
     p = mdb.models['Model-1'].parts['Side_wall_1']
     p.seedPart(size=0.04, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
 
+    print('Meshing the Sidewall 2')
     ##Meshing Side wall 2
     p = mdb.models['Model-1'].parts['Side_wall_2']
     p.seedPart(size=0.04, deviationFactor=0.1, minSizeFactor=0.1)
     p.generateMesh()
 
+    print('Meshing the Wire')
     ##Meshing wire
     p = mdb.models['Model-1'].parts['WIRE_BOI']
     session.viewports['Viewport: 1'].setValues(displayedObject=p)
@@ -1694,20 +1714,21 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     job.waitForCompletion()
     print 'Completed job'
 
-    ##END LOOP (i.e., end indentation)
+    # ##END LOOP (i.e., end indentation)
 
-    ##################################      
-    #Output Variables
-    ################################## 
+    # ##################################      
+    # #Output Variables
+    # ################################## 
 
     # Mass
     prop = mdb.models[ModelName].rootAssembly.getMassProperties()
     mass = prop['mass']
 
-    # # Payload exit velocity & angle
-    # velocity_max, veloAngle = Post_P_Script_Velo.getResults(JobName)
-
     # Max Mises stress in structure
-    outputList = Post_P_Script_Velo.getResults(JobName) 
+    veloMagMax,veloAngle,eigenVal1,maxMises = Post_P_Script.getResults(JobName) 
     
-    return veloMagMax,veloAngle,eigenVal1,maxMises, mass 
+    return veloMagMax,veloAngle,eigenVal1,maxMises,mass 
+    # return 0.0,0.0,0.0,0.0,0.0 
+
+if __name__ == "__main__":
+    evalModel(0.1, 0.1, 0.001, 2.0, 0.5, 2.0, 2.0, 1, 0.05, 5.0, 0.01)
