@@ -71,7 +71,7 @@ def evalModel(BASE_WIDTH, BASE_HEIGHT, THICKNESS, ARM_LENGTH, TAPER_RATIO, WALL_
     # Axle Beam Variables
     S1 = 0.1 #m  used to sketch the cross section
     #AXLE_LENGTH = 1.2 #m ###DESIGN VARIABLE
-    AXLE_DIAMETER = 0.2 #m  this is defined as the hypotenuse of the square cross section
+    AXLE_DIAMETER = 0.25 #m  #### 12/06 6:01 PM CHANGEE!!
 
 
     # Cross Member Variables
