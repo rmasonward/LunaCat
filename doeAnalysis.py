@@ -34,6 +34,7 @@ with open("safetyNet.txt", "w") as outFile:
 for keyVal in ['tag']: #Use taguchi only
     keyOutputDataList = []
     keyList = dataDict[keyVal]
+    jobNumber = 1
     for entry in keyList[:]:
         arm_base_width,arm_base_height,arm_wall_thickness,arm_length,arm_taper_ratio,wall_length,axle_length,material_type,top_opt_thickness,L1,clevis_edge_thickness = entry
         
@@ -41,11 +42,11 @@ for keyVal in ['tag']: #Use taguchi only
         
         isGood = False
         try:
-            veloMagMax,veloAngle,eigenVal1,maxMises,mass = evalModel(arm_base_width,arm_base_height,arm_wall_thickness,arm_length,arm_taper_ratio,wall_length,axle_length,material_type,top_opt_thickness,L1,clevis_edge_thickness)
+            veloMagMax,veloAngle,eigenVal1,maxMises,mass = evalModel(arm_base_width,arm_base_height,arm_wall_thickness,arm_length,arm_taper_ratio,wall_length,axle_length,material_type,top_opt_thickness,L1,clevis_edge_thickness,jobNumber)
             print("Entry List '"+str(entry)+"' SUCCEEDED.")
             isGood = True
         except Exception as e:
-            print(e)
+            print("EXCEPTION: "+str(e))
             veloMagMax=-1e20
             veloAngle=0.0
             eigenVal1=-1e20
@@ -60,6 +61,8 @@ for keyVal in ['tag']: #Use taguchi only
             
         with open("safetyNet.txt", "a") as outFile:
             outFile.write(",".join([str(x) for x in indivList])+"\n")
+            
+        jobNumber += 1
     outputDict[keyVal] = keyOutputDataList
     
 #output data to JSON

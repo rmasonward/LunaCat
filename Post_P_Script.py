@@ -133,3 +133,6 @@ def getResults(ModelName):
     odb.close()
     
     return veloMagMax,veloAngle,eigenVal1,maxMises
+    
+if __name__ == "__main__":
+    print(getResults("Job-1"))
