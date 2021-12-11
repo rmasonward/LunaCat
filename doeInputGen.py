@@ -2,7 +2,7 @@ import json
 import DOEmethods as doe
 
 arm_base_width_min = 0.1 #m #
-arm_base_width_max = 1.0 #m
+arm_base_width_max = 0.4 #m
 
 arm_base_height_min = 0.1 #m #
 arm_base_height_max = 0.3 #m
